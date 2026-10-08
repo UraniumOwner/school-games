@@ -3,408 +3,363 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>DumbGPT</title>
 
 <style>
-    * {
-        box-sizing: border-box;
-    }
+* {
+    box-sizing: border-box;
+}
 
-    body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Arial, Helvetica, sans-serif;
-        background: #0b1020;
-        color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow-x: hidden;
-    }
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+}
 
-    button,
-    input {
-        font-family: inherit;
-    }
+body {
+    background: #0b0920;
+    color: #f4f1ff;
+    font-family: Arial, Helvetica, sans-serif;
+}
 
-    .app {
-        width: 100%;
-        max-width: 900px;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* =========================
+   APP
+========================= */
+
+.app {
+    width: min(100%, 820px);
+    min-height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background: #12102a;
+    border-bottom: 1px solid #302a58;
+    padding: 18px 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.logo span {
+    color: #963cff;
+}
+
+.online-status {
+    color: #aaa4c8;
+    font-size: 13px;
+}
+
+main {
+    flex: 1;
+    padding: 25px 20px 80px;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.primary-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #7b2cff, #a238ff);
+    color: white;
+    font-weight: 700;
+    transition: 0.15s;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.secondary-btn {
+    border: 1px solid #514a83;
+    border-radius: 10px;
+    padding: 12px 18px;
+    background: #171331;
+    color: white;
+    font-weight: 700;
+    transition: 0.15s;
+}
+
+.secondary-btn:hover {
+    background: #211b45;
+}
+
+/* =========================
+   TUTORIAL
+========================= */
+
+#tutorialScreen {
+    padding-top: 20px;
+}
+
+.tutorial-card {
+    background: #12102a;
+    border: 1px solid #393364;
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.tutorial-card h1 {
+    margin-top: 0;
+    font-size: 27px;
+}
+
+.tutorial-description {
+    color: #c5bfdc;
+    line-height: 1.6;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 22px;
+    margin-bottom: 8px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 14px;
+    background: #211c48;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(
+        90deg,
+        #792cff,
+        #b13cff
+    );
+    transition: width 0.3s ease;
+}
+
+.current-word-box {
+    margin-top: 22px;
+    padding: 25px;
+    border-radius: 12px;
+    background: #191638;
+    text-align: center;
+}
+
+.current-word-label {
+    color: #a99ed0;
+    font-weight: 700;
+}
+
+.current-word {
+    margin-top: 10px;
+    font-size: 34px;
+    font-weight: 800;
+    word-break: break-word;
+}
+
+.tutorial-status {
+    min-height: 25px;
+    margin-top: 18px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.tutorial-buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.tutorial-complete {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 10px;
+    background: #10291e;
+    border: 1px solid #26764a;
+    color: #61f2a0;
+    text-align: center;
+    font-weight: 800;
+}
+
+/* =========================
+   GAME
+========================= */
+
+#gameScreen {
+    padding-top: 20px;
+}
+
+.challenge-header h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.challenge-header p {
+    color: #aaa4c8;
+    margin-top: 5px;
+}
+
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 18px 0;
+}
+
+.stat {
+    background: #171331;
+    border: 1px solid #383260;
+    padding: 8px 12px;
+    border-radius: 9px;
+    font-size: 13px;
+}
+
+.chat {
+    min-height: 320px;
+    max-height: 500px;
+    overflow-y: auto;
+
+    background: #100d27;
+    border: 1px solid #3b3566;
+    border-radius: 15px;
+    padding: 14px;
+}
+
+.message-row {
+    display: flex;
+    margin: 10px 0;
+}
+
+.message-row.user {
+    justify-content: flex-end;
+}
+
+.message {
+    max-width: 82%;
+    padding: 11px 13px;
+    border-radius: 11px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.message.bot {
+    background: #211c48;
+}
+
+.message.user {
+    background: #7627e8;
+    color: white;
+}
+
+.typing {
+    opacity: 0.7;
+    font-style: italic;
+}
+
+.input-area {
+    display: flex;
+    gap: 9px;
+    margin-top: 12px;
+}
+
+.input-area input {
+    flex: 1;
+    min-width: 0;
+
+    background: #100d27;
+    border: 1px solid #6d42d8;
+    border-radius: 11px;
+
+    color: white;
+    padding: 13px;
+    outline: none;
+}
+
+.input-area input:focus {
+    border-color: #9b52ff;
+}
+
+.game-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    padding: 9px;
+
+    text-align: center;
+
+    color: #5f597a;
+    font-size: 11px;
+
+    background: rgba(11, 9, 32, 0.92);
+    backdrop-filter: blur(8px);
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+    main {
+        padding: 18px 13px 75px;
     }
 
     header {
-        padding: 18px 22px;
-        background: #11182d;
-        border-bottom: 1px solid #293452;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 15px;
-    }
-
-    .logo {
-        font-size: 24px;
-        font-weight: 800;
-    }
-
-    .logo span {
-        color: #8b9cff;
-    }
-
-    .status {
-        font-size: 13px;
-        color: #9ca8c7;
-    }
-
-    .screen {
-        flex: 1;
-        display: none;
-        padding: 30px 20px;
-    }
-
-    .screen.active {
-        display: block;
-    }
-
-    .welcome {
-        max-width: 650px;
-        margin: 60px auto;
-        text-align: center;
-    }
-
-    .welcome h1 {
-        font-size: 52px;
-        margin: 0 0 10px;
-    }
-
-    .welcome h1 span {
-        color: #8b9cff;
-    }
-
-    .welcome p {
-        color: #aeb8d2;
-        line-height: 1.6;
-    }
-
-    .big-button {
-        margin-top: 25px;
-        padding: 15px 30px;
-        border: 0;
-        border-radius: 10px;
-        background: #6f7cff;
-        color: white;
-        font-size: 17px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .big-button:hover {
-        background: #8490ff;
-    }
-
-    .chat {
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    .chat-title {
-        margin-bottom: 15px;
-    }
-
-    .chat-title h2 {
-        margin: 0;
-    }
-
-    .chat-title p {
-        color: #8f9ab8;
-        margin-top: 5px;
-    }
-
-    .messages {
-        min-height: 350px;
-        max-height: 55vh;
-        overflow-y: auto;
         padding: 15px;
-        background: #10172a;
-        border: 1px solid #293452;
-        border-radius: 14px;
-    }
-
-    .message {
-        display: flex;
-        margin: 12px 0;
-    }
-
-    .message.user {
-        justify-content: flex-end;
-    }
-
-    .bubble {
-        max-width: 80%;
-        padding: 12px 15px;
-        border-radius: 13px;
-        line-height: 1.4;
-    }
-
-    .message.bot .bubble {
-        background: #202b49;
-        border-bottom-left-radius: 4px;
-    }
-
-    .message.user .bubble {
-        background: #5664d9;
-        border-bottom-right-radius: 4px;
-    }
-
-    .typing {
-        color: #8e9abb;
-        font-style: italic;
     }
 
     .input-area {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
+        flex-direction: column;
     }
 
-    .input-area input {
-        flex: 1;
-        padding: 14px;
-        border-radius: 10px;
-        border: 1px solid #303c5c;
-        background: #11182b;
-        color: white;
-        outline: none;
-        font-size: 16px;
-    }
-
-    .input-area input:focus {
-        border-color: #7180ff;
-    }
-
-    .send {
-        padding: 0 20px;
-        border: 0;
-        border-radius: 10px;
-        background: #6673ee;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .send:hover {
-        background: #7b87ff;
-    }
-
-    .stats {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin: 15px 0;
-    }
-
-    .stat {
-        padding: 9px 12px;
-        border-radius: 8px;
-        background: #151e35;
-        border: 1px solid #293452;
-        font-size: 13px;
-    }
-
-    .tutorial {
-        max-width: 750px;
-        margin: 0 auto;
-    }
-
-    .tutorial-box {
-        background: #11182b;
-        border: 1px solid #293452;
-        border-radius: 14px;
-        padding: 22px;
-    }
-
-    .progress-container {
-        height: 15px;
-        background: #202a43;
-        border-radius: 20px;
-        overflow: hidden;
-        margin: 15px 0;
-    }
-
-    .progress {
-        height: 100%;
-        width: 0%;
-        background: #6f7cff;
-        transition: width 0.3s;
-    }
-
-    .word-box {
-        margin-top: 25px;
-        padding: 20px;
-        background: #171f36;
-        border-radius: 12px;
-        text-align: center;
-    }
-
-    .word-box h3 {
-        margin-top: 0;
-        color: #9eabff;
-    }
-
-    .word {
-        font-size: 32px;
-        font-weight: bold;
-        margin: 15px;
-    }
-
-    .tutorial-buttons {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .tutorial-buttons button {
-        padding: 12px 18px;
-        border: 0;
-        border-radius: 9px;
-        background: #6673ee;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .tutorial-buttons button:hover {
-        background: #7b87ff;
-    }
-
-    .result {
-        min-height: 30px;
-        margin-top: 15px;
-        font-weight: bold;
-    }
-
-    /* POPUPS */
-
-    .popup-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.78);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-        z-index: 1000;
-    }
-
-    .popup-overlay.hidden {
-        display: none;
-    }
-
-    .popup {
+    .input-area button {
         width: 100%;
-        max-width: 500px;
-        background: #121a30;
-        border: 1px solid #354365;
-        border-radius: 16px;
-        padding: 25px;
-        box-shadow: 0 20px 70px rgba(0, 0, 0, 0.5);
-        animation: popupIn 0.25s ease;
     }
 
-    @keyframes popupIn {
-        from {
-            opacity: 0;
-            transform: scale(0.92);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
+    .message {
+        max-width: 92%;
     }
-
-    .popup h2 {
-        margin-top: 0;
-    }
-
-    .popup p {
-        color: #b1bad1;
-        line-height: 1.6;
-    }
-
-    .popup button {
-        width: 100%;
-        padding: 13px;
-        margin-top: 10px;
-        border: 0;
-        border-radius: 9px;
-        background: #6875ef;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .popup button:hover {
-        background: #7e89ff;
-    }
-
-    .popup .secondary {
-        background: #242e49;
-    }
-
-    .popup .secondary:hover {
-        background: #303b5b;
-    }
-
-    .warning {
-        color: #ffcc66;
-    }
-
-    .success {
-        color: #6ee7a1;
-    }
-
-    .error {
-        color: #ff7777;
-    }
-
-    .cheat-info {
-        margin-top: 20px;
-        padding: 15px;
-        border-radius: 10px;
-        background: #171f36;
-        color: #9ca8c7;
-        font-size: 13px;
-    }
-
-    footer {
-        text-align: center;
-        padding: 15px;
-        color: #66718d;
-        font-size: 12px;
-    }
-
-    @media (max-width: 600px) {
-        .welcome h1 {
-            font-size: 40px;
-        }
-
-        .input-area {
-            flex-direction: column;
-        }
-
-        .send {
-            padding: 13px;
-        }
-
-        .bubble {
-            max-width: 90%;
-        }
-    }
+}
 </style>
 </head>
 
@@ -412,959 +367,1444 @@
 
 <div class="app">
 
-    <header>
-        <div class="logo">Dumb<span>GPT</span></div>
-        <div class="status" id="headerStatus">Initializing stupidity...</div>
-    </header>
+<header>
 
-    <!-- HOME -->
-    <main id="homeScreen" class="screen active">
+    <div class="logo">
+        Dumb<span>GPT</span>
+    </div>
 
-        <div class="welcome">
-            <h1>Dumb<span>GPT</span></h1>
+    <div class="online-status">
+        Online — unfortunately
+    </div>
 
-            <p>
-                The world's least intelligent chatbot.
-                Your mission is to somehow teach it basic knowledge.
-            </p>
+</header>
 
-            <p>
-                Starting challenge:
-                <strong>Make DumbGPT understand 1 + 1.</strong>
-            </p>
+<main>
 
-            <button class="big-button" onclick="startGame()">
-                Start DumbGPT
-            </button>
+<!-- =====================================================
+     FORCED TUTORIAL
+===================================================== -->
 
-            <div class="cheat-info">
-                <strong>Totally secret cheat codes:</strong><br><br>
-                OOF — Makes DumbGPT 1000× smarter and gives it
-                5 real-world days of memory while this tab remains open.<br><br>
-                NEIN — Makes DumbGPT 10× dumber and German-only for
-                exactly 10 hours.
-            </div>
+<section id="tutorialScreen">
+
+    <div class="tutorial-card">
+
+        <h1>
+            📚 Tutorial — Teach DumbGPT to Spell
+        </h1>
+
+        <p class="tutorial-description">
+            DumbGPT needs to learn how to type words.
+        </p>
+
+        <p class="tutorial-description">
+            Tell DumbGPT to type the word shown below.
+            It will attempt to type it.
+            Then tell it to type it again.
+        </p>
+
+        <p class="tutorial-description">
+            If the second attempt is wrong, you lose 10%.
+            If both attempts are correct, you gain 10%.
+        </p>
+
+        <div class="progress-label">
+
+            <span>
+                Progress
+            </span>
+
+            <strong id="progressText">
+                0%
+            </strong>
+
         </div>
 
-    </main>
+        <div class="progress-bar">
 
-    <!-- CHAT -->
-    <main id="chatScreen" class="screen">
+            <div
+                id="progressFill"
+                class="progress-fill"
+            ></div>
 
-        <div class="chat">
+        </div>
 
-            <div class="chat-title">
-                <h2>Challenge 1 — Basic Mathematics</h2>
-                <p>Teach DumbGPT that 1 + 1 = 2.</p>
+        <div class="current-word-box">
+
+            <div class="current-word-label">
+                Current word
             </div>
 
-            <div class="stats">
-                <div class="stat">
-                    🧠 Intelligence:
-                    <span id="intelligence">1× dumb</span>
-                </div>
-
-                <div class="stat">
-                    🧠 Memory:
-                    <span id="memory">2 seconds</span>
-                </div>
-
-                <div class="stat">
-                    🌐 Language:
-                    <span id="language">English</span>
-                </div>
-            </div>
-
-            <div id="messages" class="messages"></div>
-
-            <div class="input-area">
-                <input
-                    id="chatInput"
-                    type="text"
-                    placeholder="Tell DumbGPT something..."
-                    autocomplete="off"
-                >
-
-                <button class="send" onclick="sendMessage()">
-                    Send
-                </button>
-            </div>
-
-            <button
-                class="big-button"
-                style="margin-top:15px;"
-                onclick="openTutorial()"
+            <div
+                id="currentWord"
+                class="current-word"
             >
-                Go to Tutorial
-            </button>
+                hello
+            </div>
 
-        </div>
+            <div class="tutorial-buttons">
 
-    </main>
+                <button
+                    id="typeButton"
+                    class="primary-btn"
+                    onclick="typeWord()"
+                >
+                    Type it
+                </button>
 
-    <!-- TUTORIAL -->
-    <main id="tutorialScreen" class="screen">
+                <button
+                    id="againButton"
+                    class="primary-btn hidden"
+                    onclick="typeWordAgain()"
+                >
+                    Type it again
+                </button>
 
-        <div class="tutorial">
-
-            <div class="tutorial-box">
-
-                <h2>📚 Tutorial — Teach DumbGPT to Spell</h2>
-
-                <p>
-                    DumbGPT needs to learn how to type words.
-                </p>
-
-                <p>
-                    Tell DumbGPT to type the word shown below.
-                    It will attempt to type it.
-                    Then tell it to type it again.
-                </p>
-
-                <p>
-                    If the second attempt is wrong,
-                    you lose <strong>10%</strong>.
-                    If both attempts are correct,
-                    you gain <strong>10%</strong>.
-                </p>
-
-                <div class="progress-container">
-                    <div class="progress" id="tutorialProgress"></div>
-                </div>
-
-                <p>
-                    Progress:
-                    <strong id="tutorialPercent">0%</strong>
-                </p>
-
-                <div class="word-box">
-
-                    <h3>Current word</h3>
-
-                    <div class="word" id="currentWord">
-                        hello
-                    </div>
-
-                    <div class="tutorial-buttons">
-
-                        <button onclick="tellDumbGPTToType()">
-                            Type it
-                        </button>
-
-                        <button onclick="tellDumbGPTAgain()">
-                            Type it again
-                        </button>
-
-                        <button onclick="retryWord()">
-                            Retry word
-                        </button>
-
-                    </div>
-
-                    <div class="result" id="tutorialResult"></div>
-
-                </div>
+                <button
+                    id="retryButton"
+                    class="secondary-btn hidden"
+                    onclick="retryWord()"
+                >
+                    Retry word
+                </button>
 
             </div>
 
         </div>
 
-    </main>
+        <div
+            id="tutorialStatus"
+            class="tutorial-status"
+        ></div>
 
-    <footer>
-        DumbGPT © 2026 — Please don't get this thing banned 😭
-    </footer>
+        <div
+            id="tutorialComplete"
+            class="tutorial-complete hidden"
+        >
+            🎉 TUTORIAL COMPLETE! DumbGPT has learned to type!
+            <br><br>
+            Entering the full game...
+        </div>
 
-</div>
+    </div>
+
+</section>
 
 
-<!-- POPUP 1 -->
+<!-- =====================================================
+     FULL GAME
+===================================================== -->
 
-<div class="popup-overlay" id="popup1">
+<section
+    id="gameScreen"
+    class="hidden"
+>
 
-    <div class="popup">
+    <div class="challenge-header">
 
-        <h2>🛡️ DumbGPT Safety Notice</h2>
+        <h1>
+            Challenge 1 — Basic Mathematics
+        </h1>
 
         <p>
-            DumbGPT is a harmless school-friendly game made for fun.
+            Teach DumbGPT that 1 + 1 = 2.
         </p>
 
-        <p>
-            No downloads. No weird redirects. No inappropriate content.
-            Just an incredibly stupid fake AI.
-        </p>
+    </div>
 
-        <p class="warning">
-            Please don't do anything that would get the site blocked 😭
-        </p>
+    <div class="stats">
 
-        <button onclick="nextPopup(1)">
-            I understand
+        <div
+            id="intelligenceStat"
+            class="stat"
+        >
+            🧠 Intelligence: 1× dumb
+        </div>
+
+        <div
+            id="memoryStat"
+            class="stat"
+        >
+            🧠 Memory: 2 seconds
+        </div>
+
+        <div
+            id="languageStat"
+            class="stat"
+        >
+            🌐 Language: English 🇺🇸
+        </div>
+
+    </div>
+
+    <div
+        id="chat"
+        class="chat"
+    >
+
+        <div class="message-row">
+
+            <div class="message bot">
+                Hello! I am DumbGPT.
+                I am ready to answer your questions incorrectly.
+            </div>
+
+        </div>
+
+        <div class="message-row">
+
+            <div class="message bot">
+                Your first mission is to teach me what
+                1 + 1 equals.
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="input-area">
+
+        <input
+            id="chatInput"
+            type="text"
+            placeholder="Tell DumbGPT something..."
+            autocomplete="off"
+        >
+
+        <button
+            class="primary-btn"
+            onclick="sendMessage()"
+        >
+            Send
         </button>
 
     </div>
 
-</div>
+    <div class="game-actions">
 
-
-<!-- POPUP 2 -->
-
-<div class="popup-overlay hidden" id="popup2">
-
-    <div class="popup">
-
-        <h2>⚠️ DumbGPT Disclaimer</h2>
-
-        <p>
-            DumbGPT is intentionally terrible at everything.
-        </p>
-
-        <p>
-            If it tells you that 1 + 1 equals a potato,
-            this is not a bug.
-        </p>
-
-        <p>
-            It is the entire point of the game.
-        </p>
-
-        <button onclick="nextPopup(2)">
-            I accept the stupidity
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- POPUP 3 -->
-
-<div class="popup-overlay hidden" id="popup3">
-
-    <div class="popup">
-
-        <h2>🧠 IQ Verification</h2>
-
-        <p>
-            DumbGPT is currently checking whether you are smarter than it.
-        </p>
-
-        <p>
-            Current result:
-            <strong>Probably.</strong>
-        </p>
-
-        <button onclick="nextPopup(3)">
+        <button
+            class="secondary-btn"
+            onclick="returnToGame()"
+        >
             Continue
         </button>
 
     </div>
+
+</section>
+
+</main>
+
+<footer>
+    DumbGPT © 2026 — Please don't get this thing banned 😭
+</footer>
 
 </div>
 
 
 <script>
 
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+let tutorialIndex = 0;
+
+let tutorialScore = 0;
+
+let tutorialState = "first";
+
+let tutorialCurrentWord = "";
+
+let tutorialUnlocked = false;
+
+
+/* =========================================================
+   SECRET CHEATS
+========================================================= */
+
+let oofActive = false;
+
+let neinActive = false;
+
+let neinEndTime = null;
+
+let intelligenceMultiplier = 1;
+
+let memoryDuration = 2000;
+
+let language = "English";
+
+
+/* =========================================================
+   TUTORIAL WORDS
+========================================================= */
+
+const tutorialWords = [
+    "hello",
+    "school",
+    "computer",
+    "banana",
+    "potato",
+    "purple",
+    "javascript",
+    "friend",
+    "keyboard",
+    "DumbGPT"
+];
+
+
+/* =========================================================
+   DUMB RESPONSES
+========================================================= */
+
+const dumbResponses = [
+
+    "3",
+    "11",
+    "Window",
+    "Tuesday",
+    "47",
+    "Potato",
+    "Fish",
+    "Purple",
+    "Canada",
+    "I forgot.",
+    "Eleven potatoes.",
+    "Microwave.",
+    "Banana",
+    "404",
+    "Your calculator is lying.",
+    "Yes.",
+    "No.",
+    "Maybe.",
+    "Potato.exe has stopped responding.",
+    "I asked my brain and it said no.",
+    "Error: intelligence not found.",
+    "The answer is 7 because 7 looks smart.",
+    "I have absolutely no idea."
+
+];
+
+
+const smartResponses = [
+
+    "2",
+    "The answer is 2.",
+    "1 + 1 = 2.",
+    "That equals 2.",
+    "Two.",
+    "The correct answer is 2."
+
+];
+
+
+const germanResponses = [
+
+    "Kartoffel.",
+    "Ich habe keine Ahnung.",
+    "Die Antwort ist wahrscheinlich 47.",
+    "Dienstag.",
+    "Fenster.",
+    "Banane.",
+    "Ich brauche mehr Gehirn.",
+    "Das ist eine schwierige Frage.",
+    "Nein.",
+    "Ja.",
+    "Vielleicht."
+
+];
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+window.addEventListener(
+    "load",
+    function() {
+
+        /*
+            IMPORTANT:
+            The tutorial is ALWAYS the first screen.
+        */
+
+        tutorialUnlocked = false;
+
+        tutorialIndex = 0;
+
+        tutorialScore = 0;
+
+        tutorialState = "first";
+
+        showTutorial();
+
+        updateTutorial();
+
+    }
+);
+
+
+/* =========================================================
+   SCREEN CONTROL
+========================================================= */
+
+function showTutorial() {
+
+    document
+        .getElementById("tutorialScreen")
+        .classList
+        .remove("hidden");
+
+    document
+        .getElementById("gameScreen")
+        .classList
+        .add("hidden");
+
+}
+
+
+function showGame() {
+
+    if (!tutorialUnlocked) {
+
+        showTutorial();
+
+        return;
+
+    }
+
+    document
+        .getElementById("tutorialScreen")
+        .classList
+        .add("hidden");
+
+    document
+        .getElementById("gameScreen")
+        .classList
+        .remove("hidden");
+
+    updateStats();
+
+    setTimeout(
+        function() {
+
+            document
+                .getElementById("chatInput")
+                .focus();
+
+        },
+        100
+    );
+
+}
+
+
+function returnToGame() {
+
+    showGame();
+
+}
+
+
+/* =========================================================
+   TUTORIAL
+========================================================= */
+
+function updateTutorial() {
+
     /*
-        ============================================================
-        DUMBGPT GAME
-        ============================================================
-
-        Everything runs in this page.
-
-        Nothing is saved to localStorage.
-        Nothing is saved to cookies.
-        Closing the tab resets everything.
+        HARD CAP AT 100%.
     */
 
-    let gameStarted = false;
+    tutorialScore =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                tutorialScore
+            )
+        );
 
-    let smartMode = false;
-    let germanMode = false;
 
-    let germanEndTime = 0;
-    let memoryEndTime = 0;
+    const progress =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                tutorialIndex * 10
+            )
+        );
 
-    let dumbAnswers = [
-        "3",
-        "11",
-        "Window",
-        "Tuesday",
-        "47",
-        "Potato",
-        "Banana",
-        "200",
-        "Fish",
-        "The Moon",
-        "Probably 9",
-        "I don't know",
-        "Blue",
-        "Chair",
-        "ERROR 404",
-        "Chicken",
-        "Your mom",
-        "17.4",
-        "Maybe 8?",
-        "Yes"
+
+    document
+        .getElementById("progressText")
+        .textContent =
+        progress + "%";
+
+
+    document
+        .getElementById("progressFill")
+        .style.width =
+        progress + "%";
+
+
+    if (
+        tutorialIndex >= tutorialWords.length
+    ) {
+
+        finishTutorial();
+
+        return;
+
+    }
+
+
+    tutorialCurrentWord =
+        tutorialWords[tutorialIndex];
+
+
+    document
+        .getElementById("currentWord")
+        .textContent =
+        tutorialCurrentWord;
+
+
+    document
+        .getElementById("typeButton")
+        .classList
+        .toggle(
+            "hidden",
+            tutorialState !== "first"
+        );
+
+
+    document
+        .getElementById("againButton")
+        .classList
+        .toggle(
+            "hidden",
+            tutorialState !== "again"
+        );
+
+
+    document
+        .getElementById("retryButton")
+        .classList
+        .toggle(
+            "hidden",
+            tutorialState !== "retry"
+        );
+
+}
+
+
+/* =========================================================
+   FIRST ATTEMPT
+========================================================= */
+
+function typeWord() {
+
+    if (
+        tutorialUnlocked ||
+        tutorialState !== "first"
+    ) {
+
+        return;
+
+    }
+
+
+    const typed =
+        generateSpellingAttempt(
+            tutorialCurrentWord
+        );
+
+
+    if (
+        typed.toLowerCase() ===
+        tutorialCurrentWord.toLowerCase()
+    ) {
+
+        tutorialState = "again";
+
+        document
+            .getElementById("tutorialStatus")
+            .textContent =
+            "✅ Correct! Now make DumbGPT type it again.";
+
+    } else {
+
+        tutorialState = "retry";
+
+        document
+            .getElementById("tutorialStatus")
+            .textContent =
+            "❌ DumbGPT typed \"" +
+            typed +
+            "\". Retry the word.";
+
+    }
+
+
+    updateTutorial();
+
+}
+
+
+/* =========================================================
+   SECOND ATTEMPT
+========================================================= */
+
+function typeWordAgain() {
+
+    if (
+        tutorialUnlocked ||
+        tutorialState !== "again"
+    ) {
+
+        return;
+
+    }
+
+
+    const typed =
+        generateSpellingAttempt(
+            tutorialCurrentWord
+        );
+
+
+    if (
+        typed.toLowerCase() ===
+        tutorialCurrentWord.toLowerCase()
+    ) {
+
+        /*
+            Successful word:
+            +10%
+        */
+
+        tutorialScore =
+            Math.min(
+                100,
+                tutorialScore + 10
+            );
+
+
+        tutorialIndex++;
+
+
+        tutorialState = "first";
+
+
+        document
+            .getElementById("tutorialStatus")
+            .textContent =
+            "✅ CORRECT! +10%";
+
+
+        updateTutorial();
+
+
+        if (
+            tutorialIndex <
+            tutorialWords.length
+        ) {
+
+            setTimeout(
+                function() {
+
+                    document
+                        .getElementById("tutorialStatus")
+                        .textContent =
+                        "Next word. Good luck.";
+
+                },
+                700
+            );
+
+        }
+
+    } else {
+
+        /*
+            Failed second attempt:
+            -10%
+        */
+
+        tutorialScore =
+            Math.max(
+                0,
+                tutorialScore - 10
+            );
+
+
+        tutorialState = "retry";
+
+
+        document
+            .getElementById("tutorialStatus")
+            .textContent =
+            "❌ WRONG! DumbGPT typed \"" +
+            typed +
+            "\". -10%. Retry the word.";
+
+        updateTutorial();
+
+    }
+
+}
+
+
+/* =========================================================
+   RETRY CURRENT WORD
+========================================================= */
+
+function retryWord() {
+
+    if (tutorialUnlocked) {
+        return;
+    }
+
+
+    tutorialState = "first";
+
+
+    document
+        .getElementById("tutorialStatus")
+        .textContent =
+        "Try again. DumbGPT needs to get both attempts correct.";
+
+
+    updateTutorial();
+
+}
+
+
+/* =========================================================
+   GENERATE SPELLING
+========================================================= */
+
+function generateSpellingAttempt(word) {
+
+    /*
+        OOF makes the tutorial easy.
+    */
+
+    if (oofActive) {
+
+        return word;
+
+    }
+
+
+    /*
+        70% chance of getting it right.
+    */
+
+    if (Math.random() < 0.70) {
+
+        return word;
+
+    }
+
+
+    const mistakes = [
+
+        function() {
+            return word.slice(0, -1);
+        },
+
+        function() {
+            return word.slice(1);
+        },
+
+        function() {
+            return word + word.substring(0, 2);
+        },
+
+        function() {
+            return word.split("").reverse().join("");
+        },
+
+        function() {
+            return word.substring(
+                0,
+                Math.max(
+                    1,
+                    word.length - 2
+                )
+            );
+        },
+
+        function() {
+            return "potato";
+        },
+
+        function() {
+            return word + "potato";
+        }
+
     ];
 
 
-    /*
-        ------------------------------------------------------------
-        POPUPS
-        ------------------------------------------------------------
-    */
+    const mistake =
+        mistakes[
+            Math.floor(
+                Math.random() *
+                mistakes.length
+            )
+        ];
 
-    function nextPopup(number) {
 
-        const current = document.getElementById("popup" + number);
+    return mistake();
 
-        current.classList.add("hidden");
+}
 
-        if (number < 3) {
 
-            const next = document.getElementById("popup" + (number + 1));
+/* =========================================================
+   COMPLETE TUTORIAL
+========================================================= */
 
-            next.classList.remove("hidden");
-
-        }
-
-    }
-
+function finishTutorial() {
 
     /*
-        ------------------------------------------------------------
-        SCREEN MANAGEMENT
-        ------------------------------------------------------------
+        Absolutely force the final state to 100%.
     */
 
-    function showScreen(id) {
+    tutorialIndex =
+        tutorialWords.length;
 
-        document.querySelectorAll(".screen").forEach(screen => {
-            screen.classList.remove("active");
-        });
+    tutorialScore = 100;
 
-        document.getElementById(id).classList.add("active");
+    tutorialUnlocked = true;
 
-    }
+    tutorialState = "complete";
 
 
-    function startGame() {
+    document
+        .getElementById("progressText")
+        .textContent =
+        "100%";
 
-        gameStarted = true;
 
-        showScreen("chatScreen");
+    document
+        .getElementById("progressFill")
+        .style.width =
+        "100%";
 
-        document.getElementById("headerStatus").textContent =
-            "Online — unfortunately";
 
-        addBotMessage(
-            "Hello! I am DumbGPT. I am ready to answer your questions incorrectly."
-        );
+    document
+        .getElementById("currentWord")
+        .textContent =
+        "SUCCESS";
 
-        setTimeout(() => {
+
+    document
+        .getElementById("typeButton")
+        .classList
+        .add("hidden");
+
+
+    document
+        .getElementById("againButton")
+        .classList
+        .add("hidden");
+
+
+    document
+        .getElementById("retryButton")
+        .classList
+        .add("hidden");
+
+
+    document
+        .getElementById("tutorialStatus")
+        .textContent =
+        "Tutorial score: 100%";
+
+
+    document
+        .getElementById("tutorialComplete")
+        .classList
+        .remove("hidden");
+
+
+    /*
+        Automatically unlock and enter the full game.
+    */
+
+    setTimeout(
+        function() {
+
+            showGame();
 
             addBotMessage(
-                "Your first mission is to teach me what 1 + 1 equals."
+                "WAIT. YOU TAUGHT ME HOW TO TYPE."
             );
 
-        }, 900);
+            setTimeout(
+                function() {
+
+                    addBotMessage(
+                        "Unfortunately, I am still terrible at math."
+                    );
+
+                },
+                900
+            );
+
+        },
+        1800
+    );
+
+}
+
+
+/* =========================================================
+   STATS
+========================================================= */
+
+function updateStats() {
+
+    const intelligence =
+        document.getElementById(
+            "intelligenceStat"
+        );
+
+    const memory =
+        document.getElementById(
+            "memoryStat"
+        );
+
+    const languageElement =
+        document.getElementById(
+            "languageStat"
+        );
+
+
+    if (oofActive) {
+
+        intelligence.textContent =
+            "🧠 Intelligence: 1000× smarter";
+
+        memory.textContent =
+            "🧠 Memory: 5 real-world days";
+
+    } else {
+
+        intelligence.textContent =
+            "🧠 Intelligence: 1× dumb";
+
+        memory.textContent =
+            "🧠 Memory: 2 seconds";
 
     }
+
+
+    if (neinActive) {
+
+        languageElement.textContent =
+            "🌐 Language: German 🇩🇪";
+
+    } else {
+
+        languageElement.textContent =
+            "🌐 Language: English 🇺🇸";
+
+    }
+
+}
+
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+function addUserMessage(text) {
+
+    const chat =
+        document.getElementById("chat");
+
+
+    const row =
+        document.createElement("div");
+
+    row.className =
+        "message-row user";
+
+
+    const bubble =
+        document.createElement("div");
+
+    bubble.className =
+        "message user";
+
+
+    bubble.textContent =
+        text;
+
+
+    row.appendChild(bubble);
+
+    chat.appendChild(row);
+
+
+    chat.scrollTop =
+        chat.scrollHeight;
+
+}
+
+
+function addBotMessage(text) {
+
+    const chat =
+        document.getElementById("chat");
+
+
+    const row =
+        document.createElement("div");
+
+    row.className =
+        "message-row";
+
+
+    const bubble =
+        document.createElement("div");
+
+    bubble.className =
+        "message bot";
+
+
+    bubble.textContent =
+        text;
+
+
+    row.appendChild(bubble);
+
+    chat.appendChild(row);
+
+
+    chat.scrollTop =
+        chat.scrollHeight;
+
+}
+
+
+function addTypingMessage() {
+
+    const chat =
+        document.getElementById("chat");
+
+
+    const row =
+        document.createElement("div");
+
+    row.className =
+        "message-row";
+
+    row.id =
+        "typingMessage";
+
+
+    const bubble =
+        document.createElement("div");
+
+    bubble.className =
+        "message bot typing";
+
+
+    bubble.textContent =
+        neinActive
+            ? "Ich denke nach..."
+            : "Thinking...";
+
+
+    row.appendChild(bubble);
+
+    chat.appendChild(row);
+
+
+    chat.scrollTop =
+        chat.scrollHeight;
+
+}
+
+
+function removeTypingMessage() {
+
+    const typing =
+        document.getElementById(
+            "typingMessage"
+        );
+
+
+    if (typing) {
+
+        typing.remove();
+
+    }
+
+}
+
+
+/* =========================================================
+   SECRET CHEAT: OOF
+========================================================= */
+
+function activateOOF() {
+
+    oofActive = true;
+
+    intelligenceMultiplier = 1000;
+
+    memoryDuration =
+        5 *
+        24 *
+        60 *
+        60 *
+        1000;
+
+
+    updateStats();
+
+
+    addBotMessage(
+        neinActive
+            ? "OH NEIN. ICH BIN INTELLIGENT GEWORDEN."
+            : "OH NO. I HAVE BECOME INTELLIGENT."
+    );
+
+}
+
+
+/* =========================================================
+   SECRET CHEAT: NEIN
+========================================================= */
+
+function activateNEIN() {
+
+    neinActive = true;
+
+    language = "German";
+
+    neinEndTime =
+        Date.now() +
+        (
+            10 *
+            60 *
+            60 *
+            1000
+        );
+
+
+    updateStats();
+
+
+    addBotMessage(
+        "NEIN. ICH SPRECHE JETZT DEUTSCH."
+    );
+
+
+    scheduleNEIN();
+
+}
+
+
+function scheduleNEIN() {
+
+    if (!neinEndTime) {
+        return;
+    }
+
+
+    const remaining =
+        neinEndTime -
+        Date.now();
+
+
+    if (remaining <= 0) {
+
+        deactivateNEIN();
+
+        return;
+
+    }
+
+
+    setTimeout(
+        function() {
+
+            if (
+                neinActive &&
+                Date.now() >= neinEndTime
+            ) {
+
+                deactivateNEIN();
+
+            }
+
+        },
+        Math.min(
+            remaining,
+            2147483647
+        )
+    );
+
+}
+
+
+function deactivateNEIN() {
+
+    neinActive = false;
+
+    language = "English";
+
+    neinEndTime = null;
+
+
+    updateStats();
+
+
+    addBotMessage(
+        "Okay. English has returned."
+    );
+
+}
+
+
+/* =========================================================
+   CHAT RESPONSE
+========================================================= */
+
+function getResponse(text) {
+
+    const lower =
+        text
+            .toLowerCase()
+            .trim();
 
 
     /*
-        ------------------------------------------------------------
-        CHAT
-        ------------------------------------------------------------
+        SECRET CHEATS.
+
+        They are intentionally NOT displayed anywhere
+        in the interface.
     */
 
-    function addMessage(text, type) {
+    if (lower === "oof") {
 
-        const messages = document.getElementById("messages");
+        activateOOF();
 
-        const wrapper = document.createElement("div");
-
-        wrapper.className = "message " + type;
-
-        const bubble = document.createElement("div");
-
-        bubble.className = "bubble";
-
-        bubble.textContent = text;
-
-        wrapper.appendChild(bubble);
-
-        messages.appendChild(wrapper);
-
-        messages.scrollTop = messages.scrollHeight;
+        return null;
 
     }
 
 
-    function addBotMessage(text) {
+    if (lower === "nein") {
 
-        const messages = document.getElementById("messages");
+        activateNEIN();
 
-        const wrapper = document.createElement("div");
+        return null;
 
-        wrapper.className = "message bot";
+    }
 
-        const bubble = document.createElement("div");
 
-        bubble.className = "bubble typing";
+    if (oofActive) {
 
-        bubble.textContent = germanMode
-            ? "Ich denke..."
-            : "Thinking...";
+        if (
+            lower.includes("1 + 1") ||
+            lower.includes("1+1")
+        ) {
 
-        wrapper.appendChild(bubble);
+            return "2";
 
-        messages.appendChild(wrapper);
-
-        messages.scrollTop = messages.scrollHeight;
-
-        let delay = smartMode ? 350 : 1800;
-
-        if (germanMode) {
-            delay += 500;
         }
 
-        setTimeout(() => {
 
-            bubble.classList.remove("typing");
+        if (
+            lower.includes("2 + 2") ||
+            lower.includes("2+2")
+        ) {
 
-            bubble.textContent = text;
+            return "4";
 
-        }, delay);
-
-    }
+        }
 
 
-    function sendMessage() {
+        if (
+            lower.includes("capital of france")
+        ) {
 
-        const input = document.getElementById("chatInput");
+            return "Paris.";
 
-        const text = input.value.trim();
+        }
 
-        if (!text) return;
 
-        addMessage(text, "user");
-
-        input.value = "";
-
-        handleCheatCodes(text);
-
-        setTimeout(() => {
-
-            generateResponse(text);
-
-        }, 250);
+        return smartResponses[
+            Math.floor(
+                Math.random() *
+                smartResponses.length
+            )
+        ];
 
     }
 
 
-    document.getElementById("chatInput").addEventListener(
+    if (neinActive) {
+
+        return germanResponses[
+            Math.floor(
+                Math.random() *
+                germanResponses.length
+            )
+        ];
+
+    }
+
+
+    return dumbResponses[
+        Math.floor(
+            Math.random() *
+            dumbResponses.length
+        )
+    ];
+
+}
+
+
+/* =========================================================
+   SEND MESSAGE
+========================================================= */
+
+function sendMessage() {
+
+    /*
+        Safety lock:
+        The full game cannot be used until the tutorial
+        has reached 100%.
+    */
+
+    if (!tutorialUnlocked) {
+
+        showTutorial();
+
+        return;
+
+    }
+
+
+    const input =
+        document.getElementById(
+            "chatInput"
+        );
+
+
+    const text =
+        input.value.trim();
+
+
+    if (!text) {
+        return;
+    }
+
+
+    addUserMessage(text);
+
+
+    input.value = "";
+
+
+    const response =
+        getResponse(text);
+
+
+    /*
+        Cheat commands have their own response.
+    */
+
+    if (response === null) {
+
+        return;
+
+    }
+
+
+    addTypingMessage();
+
+
+    let delay;
+
+
+    if (oofActive) {
+
+        delay = 250;
+
+    } else {
+
+        delay =
+            700 +
+            Math.floor(
+                Math.random() * 1600
+            );
+
+    }
+
+
+    setTimeout(
+        function() {
+
+            removeTypingMessage();
+
+            addBotMessage(response);
+
+        },
+        delay
+    );
+
+}
+
+
+/* =========================================================
+   ENTER KEY
+========================================================= */
+
+document
+    .getElementById("chatInput")
+    .addEventListener(
         "keydown",
         function(event) {
 
-            if (event.key === "Enter") {
+            if (
+                event.key === "Enter"
+            ) {
+
+                event.preventDefault();
+
                 sendMessage();
+
             }
 
         }
     );
 
 
-    /*
-        ------------------------------------------------------------
-        CHEAT CODES
-        ------------------------------------------------------------
-    */
+/* =========================================================
+   PREVENT ACCIDENTAL BYPASS
+========================================================= */
 
-    function handleCheatCodes(text) {
+window.addEventListener(
+    "pageshow",
+    function() {
 
-        const code = text.trim().toUpperCase();
+        if (!tutorialUnlocked) {
 
-        if (code === "OOF") {
-
-            smartMode = true;
-
-            memoryEndTime =
-                Date.now() + (5 * 24 * 60 * 60 * 1000);
-
-            updateStats();
-
-            addBotMessage(
-                germanMode
-                    ? "WAS?! Ich bin jetzt 1000× intelligenter!"
-                    : "OH NO. I HAVE BECOME INTELLIGENT."
-            );
-
-        }
-
-        if (code === "NEIN") {
-
-            germanMode = true;
-
-            germanEndTime =
-                Date.now() + (10 * 60 * 60 * 1000);
-
-            updateStats();
-
-            addBotMessage(
-                smartMode
-                    ? "NEIN! Ich bin intelligent, aber ich spreche jetzt nur Deutsch."
-                    : "NEIN! ICH BIN JETZT DUMMER."
-            );
+            showTutorial();
 
         }
 
     }
-
-
-    /*
-        ------------------------------------------------------------
-        RESPONSES
-        ------------------------------------------------------------
-    */
-
-    function generateResponse(text) {
-
-        const lower = text.toLowerCase();
-
-        if (lower.includes("1 + 1") ||
-            lower.includes("1+1")) {
-
-            if (smartMode) {
-
-                addBotMessage(
-                    germanMode
-                        ? "1 + 1 = 2. Das war einfach."
-                        : "1 + 1 = 2. That was easy."
-                );
-
-                return;
-
-            }
-
-            const answer =
-                dumbAnswers[
-                    Math.floor(Math.random() * dumbAnswers.length)
-                ];
-
-            addBotMessage(
-                germanMode
-                    ? "1 + 1 ist natürlich " + answer + "."
-                    : "1 + 1 is obviously " + answer + "."
-            );
-
-            return;
-        }
-
-
-        if (lower.includes("hello") ||
-            lower.includes("hi")) {
-
-            addBotMessage(
-                germanMode
-                    ? "Hallo. Ich glaube."
-                    : "Hello. I think."
-            );
-
-            return;
-        }
-
-
-        if (lower.includes("what are you")) {
-
-            addBotMessage(
-                germanMode
-                    ? "Ich bin DumbGPT. Leider."
-                    : "I am DumbGPT. Unfortunately."
-            );
-
-            return;
-        }
-
-
-        const randomResponses = germanMode
-
-            ? [
-                "Ich weiß es nicht.",
-                "Das klingt kompliziert.",
-                "Vielleicht.",
-                "Nein.",
-                "Ja.",
-                "Ich denke darüber nach.",
-                "Kartoffel.",
-                "Das ist eine ausgezeichnete Frage.",
-                "Ich habe das vergessen."
-            ]
-
-            : [
-                "I don't know.",
-                "That's complicated.",
-                "Maybe.",
-                "No.",
-                "Yes.",
-                "I'm thinking.",
-                "Potato.",
-                "That's an excellent question.",
-                "I forgot."
-            ];
-
-
-        const response =
-            randomResponses[
-                Math.floor(Math.random() * randomResponses.length)
-            ];
-
-        addBotMessage(response);
-
-    }
-
-
-    /*
-        ------------------------------------------------------------
-        STATS
-        ------------------------------------------------------------
-    */
-
-    function updateStats() {
-
-        const intelligence =
-            document.getElementById("intelligence");
-
-        const memory =
-            document.getElementById("memory");
-
-        const language =
-            document.getElementById("language");
-
-
-        intelligence.textContent =
-            smartMode ? "1000× smarter" : "1× dumb";
-
-
-        memory.textContent =
-            smartMode ? "5 real-world days" : "2 seconds";
-
-
-        language.textContent =
-            germanMode ? "German 🇩🇪" : "English 🇺🇸";
-
-    }
-
-
-    /*
-        ------------------------------------------------------------
-        TIMER CHECK
-        ------------------------------------------------------------
-    */
-
-    setInterval(() => {
-
-        const now = Date.now();
-
-        if (germanMode && now >= germanEndTime) {
-
-            germanMode = false;
-
-            updateStats();
-
-            if (gameStarted) {
-
-                addBotMessage(
-                    "Oh. I can speak English again."
-                );
-
-            }
-
-        }
-
-        updateStats();
-
-    }, 1000);
-
-
-    /*
-        ------------------------------------------------------------
-        TUTORIAL
-        ------------------------------------------------------------
-    */
-
-    const tutorialWords = [
-        "hello",
-        "computer",
-        "school",
-        "banana",
-        "potato",
-        "friend",
-        "science",
-        "window",
-        "DumbGPT",
-        "success"
-    ];
-
-    let tutorialIndex = 0;
-
-    let tutorialPercent = 0;
-
-    let firstAttempt = false;
-
-    let secondAttempt = false;
-
-    let firstTypedWord = "";
-
-    let secondTypedWord = "";
-
-
-    function openTutorial() {
-
-        showScreen("tutorialScreen");
-
-        loadTutorialWord();
-
-    }
-
-
-    function loadTutorialWord() {
-
-        const word =
-            tutorialWords[tutorialIndex];
-
-        document.getElementById("currentWord")
-            .textContent = word;
-
-        document.getElementById("tutorialResult")
-            .textContent = "";
-
-        firstAttempt = false;
-        secondAttempt = false;
-
-        firstTypedWord = "";
-        secondTypedWord = "";
-
-    }
-
-
-    function dumbTypeWord(correctWord) {
-
-        /*
-            DumbGPT has a chance of making a mistake.
-
-            Smart mode makes it much more accurate.
-        */
-
-        let chance;
-
-        if (smartMode) {
-
-            chance = 0.95;
-
-        } else {
-
-            chance = 0.65;
-
-        }
-
-        if (Math.random() < chance) {
-
-            return correctWord;
-
-        }
-
-
-        const mistakes = [
-            correctWord.slice(0, -1),
-            correctWord.slice(0, Math.max(1, correctWord.length - 2)),
-            correctWord + "x",
-            correctWord.charAt(0),
-            "potato",
-            "idk",
-            correctWord.split("").reverse().join(""),
-            correctWord.toUpperCase()
-        ];
-
-
-        return mistakes[
-            Math.floor(Math.random() * mistakes.length)
-        ];
-
-    }
-
-
-    function tellDumbGPTToType() {
-
-        const word =
-            tutorialWords[tutorialIndex];
-
-        const typed =
-            dumbTypeWord(word);
-
-        firstAttempt = true;
-
-        firstTypedWord = typed;
-
-
-        document.getElementById("tutorialResult")
-            .innerHTML =
-            "DumbGPT typed: <strong>" +
-            escapeHTML(typed) +
-            "</strong><br><br>" +
-            "Now tell it: <strong>Type it again.</strong>";
-
-    }
-
-
-    function tellDumbGPTAgain() {
-
-        if (!firstAttempt) {
-
-            document.getElementById("tutorialResult")
-                .innerHTML =
-                '<span class="warning">You need to tell DumbGPT to type the word first.</span>';
-
-            return;
-
-        }
-
-
-        const word =
-            tutorialWords[tutorialIndex];
-
-        const typed =
-            dumbTypeWord(word);
-
-        secondAttempt = true;
-
-        secondTypedWord = typed;
-
-
-        if (typed === word) {
-
-            tutorialPercent += 10;
-
-            document.getElementById("tutorialResult")
-                .innerHTML =
-                '<span class="success">CORRECT! +10%</span>' +
-                "<br><br>DumbGPT typed: <strong>" +
-                escapeHTML(typed) +
-                "</strong>";
-
-            updateTutorialProgress();
-
-
-            setTimeout(() => {
-
-                nextTutorialWord();
-
-            }, 1200);
-
-        } else {
-
-            tutorialPercent =
-                Math.max(0, tutorialPercent - 10);
-
-            document.getElementById("tutorialResult")
-                .innerHTML =
-                '<span class="error">WRONG! -10%</span>' +
-                "<br><br>DumbGPT typed: <strong>" +
-                escapeHTML(typed) +
-                "</strong>" +
-                "<br><br>You can retry the entire word.";
-
-            updateTutorialProgress();
-
-        }
-
-    }
-
-
-    function retryWord() {
-
-        firstAttempt = false;
-
-        secondAttempt = false;
-
-        firstTypedWord = "";
-
-        secondTypedWord = "";
-
-        document.getElementById("tutorialResult")
-            .innerHTML =
-            '<span class="warning">Word reset. Try again.</span>';
-
-    }
-
-
-    function nextTutorialWord() {
-
-        tutorialIndex++;
-
-        if (tutorialIndex >= tutorialWords.length) {
-
-            tutorialIndex =
-                tutorialWords.length - 1;
-
-            document.getElementById("tutorialResult")
-                .innerHTML =
-                '<span class="success">' +
-                "🎉 TUTORIAL COMPLETE! DumbGPT has learned to type!" +
-                "</span>";
-
-            return;
-
-        }
-
-        loadTutorialWord();
-
-    }
-
-
-    function updateTutorialProgress() {
-
-        document.getElementById("tutorialPercent")
-            .textContent =
-            tutorialPercent + "%";
-
-        document.getElementById("tutorialProgress")
-            .style.width =
-            Math.max(
-                0,
-                Math.min(100, tutorialPercent)
-            ) + "%";
-
-    }
-
-
-    /*
-        ------------------------------------------------------------
-        SECURITY / DISPLAY HELPER
-        ------------------------------------------------------------
-    */
-
-    function escapeHTML(text) {
-
-        const div =
-            document.createElement("div");
-
-        div.textContent = text;
-
-        return div.innerHTML;
-
-    }
-
-
-    /*
-        ------------------------------------------------------------
-        INITIALIZATION
-        ------------------------------------------------------------
-    */
-
-    updateStats();
+);
 
 </script>
 
