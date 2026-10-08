@@ -309,13 +309,6 @@ button.danger {
     margin-top: 0;
 }
 
-.reading-word {
-    text-align: center;
-    font-size: 48px;
-    font-weight: 900;
-    margin: 35px 0;
-}
-
 .footer {
     text-align: center;
     color: #62576b;
@@ -725,12 +718,6 @@ function tutorialType() {
     const word =
         tutorialWords[tutorialIndex];
 
-    /*
-        Much easier than before.
-        DumbGPT is still dumb, but not
-        painfully annoying.
-    */
-
     const correct =
         Math.random() < 0.90;
 
@@ -1124,7 +1111,7 @@ function updateMission() {
 
 
 /* =====================================================
-   CHAT
+   SEND MESSAGE
 ===================================================== */
 
 function sendMessage() {
@@ -1147,6 +1134,7 @@ function sendMessage() {
         text.toLowerCase();
 
     addPlayerMessage(text);
+
 
     /* SECRET CHEATS */
 
@@ -1219,13 +1207,56 @@ function sendMessage() {
 
 
 /* =====================================================
-   MATH
+   MATH ANSWER HANDLER
 ===================================================== */
 
 function handleMathAnswer(text) {
 
     const mission =
         missions[missionIndex];
+
+    /*
+        FIXED OOF BEHAVIOR
+
+        If OOF is active, DumbGPT actually
+        solves the current mission instead of
+        merely claiming that it knows it.
+    */
+
+    if (oofActive) {
+
+        const looksLikeMathQuestion =
+            isMathQuestion(text, mission);
+
+        if (looksLikeMathQuestion) {
+
+            iq++;
+
+            missionLearned = true;
+
+            updateStats();
+
+            addBotMessage(
+                getOOFCorrectReply(
+                    mission.answer
+                )
+            );
+
+            setTimeout(
+                advanceMission,
+                1100
+            );
+
+            return;
+        }
+    }
+
+
+    /*
+        Normal teaching behavior:
+        the player has to give DumbGPT
+        the correct answer.
+    */
 
     const normalized =
         normalizeAnswer(text);
@@ -1235,13 +1266,9 @@ function handleMathAnswer(text) {
             mission.answer
         );
 
-    /*
-        OOF means DumbGPT already knows
-        the correct answer.
-    */
-
     if (
-        normalized === expected
+        normalized ===
+        expected
     ) {
 
         iq++;
@@ -1256,12 +1283,6 @@ function handleMathAnswer(text) {
             )
         );
 
-        /*
-            THIS IS THE FIX:
-            automatically advance after
-            DumbGPT learns the answer.
-        */
-
         setTimeout(
             advanceMission,
             1100
@@ -1271,13 +1292,105 @@ function handleMathAnswer(text) {
     }
 
 
-    /* DumbGPT remains stupid */
-
     addBotMessage(
         getWrongMathReply()
     );
 }
 
+
+/* =====================================================
+   DETECT MATH QUESTIONS
+===================================================== */
+
+function isMathQuestion(text, mission) {
+
+    const lower =
+        text.toLowerCase();
+
+    /*
+        If the user directly mentions the
+        current equation, OOF answers it.
+    */
+
+    const question =
+        mission.question.toLowerCase();
+
+    const questionWithoutSpaces =
+        question.replace(/\s+/g, "");
+
+    const textWithoutSpaces =
+        lower.replace(/\s+/g, "");
+
+    if (
+        textWithoutSpaces.includes(
+            questionWithoutSpaces
+        )
+    ) {
+        return true;
+    }
+
+    /*
+        Common ways a player may ask it.
+    */
+
+    if (
+        lower.includes("what is") ||
+        lower.includes("whats") ||
+        lower.includes("what's") ||
+        lower.includes("solve") ||
+        lower.includes("calculate") ||
+        lower.includes("answer")
+    ) {
+
+        /*
+            Avoid treating random messages as
+            math questions unless there is some
+            mathematical content.
+        */
+
+        if (
+            /[0-9x+\-*/%=²³!]/i.test(text) ||
+            lower.includes("math") ||
+            lower.includes("equation") ||
+            lower.includes("derivative") ||
+            lower.includes("sin")
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/* =====================================================
+   OOF CORRECT RESPONSE
+===================================================== */
+
+function getOOFCorrectReply(answer) {
+
+    if (neinActive) {
+
+        return getRandom([
+            `Die Antwort ist ${answer}.`,
+            `Ich habe die Aufgabe gelöst. ${answer}.`,
+            `Die richtige Antwort ist ${answer}.`
+        ]);
+    }
+
+    return getRandom([
+        `The answer is ${answer}.`,
+        `The correct answer is ${answer}.`,
+        `I solved it. The answer is ${answer}.`,
+        `${answer}. I finally understand mathematics.`,
+        `The answer is ${answer}. I am actually intelligent now.`
+    ]);
+}
+
+
+/* =====================================================
+   NORMAL CORRECT REPLY
+===================================================== */
 
 function getCorrectReply(answer) {
 
@@ -1290,16 +1403,6 @@ function getCorrectReply(answer) {
         ]);
     }
 
-    if (oofActive) {
-
-        return getRandom([
-            `The correct answer is ${answer}.`,
-            `I understand now. The answer is ${answer}.`,
-            `Correct. The answer is ${answer}.`,
-            `I have successfully learned this.`
-        ]);
-    }
-
     return getRandom([
         `The correct answer is ${answer}.`,
         `I finally understand. ${answer}.`,
@@ -1308,6 +1411,10 @@ function getCorrectReply(answer) {
     ]);
 }
 
+
+/* =====================================================
+   WRONG MATH
+===================================================== */
 
 function getWrongMathReply() {
 
@@ -1318,17 +1425,20 @@ function getWrongMathReply() {
             "Kartoffel.",
             "Der Mond.",
             "Ich weiß es nicht.",
-            "404."
+            "404.",
+            "Dienstag.",
+            "Fenster."
         ]);
     }
 
     if (oofActive) {
 
         return getRandom([
-            "I already know the correct answer.",
-            "Try telling me the answer again.",
-            "I am processing that information.",
-            "I think I understand."
+            "I need a mathematical question.",
+            "Ask me the actual equation.",
+            "I am ready to solve it.",
+            "Give me the math problem.",
+            "I can solve this. Probably."
         ]);
     }
 
@@ -1393,12 +1503,6 @@ function advanceMission() {
     );
 }
 
-
-/*
-    The Continue button is kept as a backup,
-    but normal correct answers automatically
-    advance now.
-*/
 
 function continueMission() {
 
@@ -1525,12 +1629,27 @@ function handleReadingAnswer(text) {
 }
 
 
+function finishGame() {
+
+    gameComplete = true;
+
+    addSystemMessage(
+        "🎉 FINAL MISSION COMPLETE!"
+    );
+
+    addBotMessage(
+        "I CAN READ. I AM FREE."
+    );
+
+    addBotMessage(
+        "wait... why am I still DumbGPT?"
+    );
+}
+
+
 /* =====================================================
    CHEATS
 ===================================================== */
-
-
-/* IQBOOST */
 
 function activateIQBoost() {
 
@@ -1548,7 +1667,12 @@ function activateIQBoost() {
 }
 
 
-/* 2+2=5 */
+/*
+    2+2=5
+
+    Intentionally skips the current math
+    mission incorrectly.
+*/
 
 function activateWrongMath() {
 
@@ -1581,7 +1705,9 @@ function activateWrongMath() {
 }
 
 
-/* I_AM_SMART */
+/*
+    I_AM_SMART
+*/
 
 function activateSmart() {
 
@@ -1591,7 +1717,9 @@ function activateSmart() {
 }
 
 
-/* KILLDUMBGPT */
+/*
+    KILLDUMBGPT
+*/
 
 function activateKill() {
 
@@ -1605,7 +1733,12 @@ function activateKill() {
 }
 
 
-/* NEIN */
+/*
+    NEIN
+
+    German for exactly 10 real-world hours.
+    Does NOT disable OOF.
+*/
 
 function activateNEIN() {
 
@@ -1665,7 +1798,13 @@ function checkNEIN() {
 }
 
 
-/* OOF */
+/*
+    OOF
+
+    1000× smarter.
+    5 real-world days of in-tab memory.
+    Does NOT persist after closing the tab.
+*/
 
 function activateOOF() {
 
@@ -1898,6 +2037,10 @@ function normalizeAnswer(text) {
         )
         .replace(
             /^the answer is\s+/,
+            ""
+        )
+        .replace(
+            /^the correct answer is\s+/,
             ""
         )
         .replace(
