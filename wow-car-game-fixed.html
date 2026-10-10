@@ -1,0 +1,784 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wow car game</title>
+<style>
+:root {
+  --bg:#080d18; --panel:rgba(12,21,39,.96);
+  --line:rgba(139,174,255,.25); --blue:#69a8ff;
+  --green:#65f2ad; --text:#eef4ff; --muted:#a3b1c9;
+}
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+button{color:var(--text);background:#172844;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:750;cursor:pointer}
+button:hover{background:#25416c}
+button:disabled{opacity:.4;cursor:not-allowed}
+.primary{color:#071321;background:linear-gradient(135deg,#79b9ff,#65f2ad);border:0}
+.overlay{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:16px;background:#030710c9;backdrop-filter:blur(10px);overflow:auto}
+.hidden{display:none!important}
+.panel{width:min(760px,100%);max-height:94vh;overflow:auto;padding:26px;background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 25px 100px #0009}
+h1{font-size:clamp(40px,8vw,76px);letter-spacing:-3px;line-height:.94;margin:10px 0}
+h1 span{color:var(--blue)}
+h2{margin:0 0 10px}
+p{color:var(--muted);line-height:1.6}
+.eyebrow{color:var(--green);font-size:11px;letter-spacing:3px;font-weight:900}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#hud{position:fixed;z-index:2;top:14px;left:14px;display:flex;flex-wrap:wrap;gap:8px;max-width:calc(100vw - 28px);pointer-events:none}
+.pill{background:#080f1de0;border:1px solid var(--line);padding:9px 13px;border-radius:12px;font-size:13px;backdrop-filter:blur(10px)}
+.pill b{color:var(--green)}
+#rightButtons{position:fixed;top:14px;right:14px;z-index:3;display:flex;gap:8px}
+#help{position:fixed;bottom:14px;left:14px;z-index:2;background:#080f1ddd;border:1px solid var(--line);border-radius:12px;padding:10px 13px;color:var(--muted);font-size:12px;line-height:1.7;pointer-events:none}
+#toast{position:fixed;z-index:8;top:82px;left:50%;transform:translateX(-50%);background:#101f35;border:1px solid #4d83c7;border-radius:12px;padding:12px 18px;font-weight:800;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+#toast.show{opacity:1}
+.vehicleGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;margin:18px 0}
+.vehicle{border:1px solid var(--line);background:#0c1629;border-radius:14px;padding:13px;display:flex;flex-direction:column;gap:7px;min-height:175px}
+.vehicle.selected{border-color:var(--green);box-shadow:0 0 0 1px #65f2ad44}
+.vehicle .emoji{font-size:30px}
+.vehicle small{color:var(--muted);line-height:1.45}
+.vehicle button{margin-top:auto}
+#mobileControls{display:none;position:fixed;z-index:4;bottom:15px;right:15px;grid-template-columns:repeat(3,46px);gap:5px}
+#mobileControls button{width:46px;height:46px;padding:0;background:#0a1629dd;touch-action:none;font-size:18px}
+#mobileControls .empty{visibility:hidden}
+#mobileControls .wide{grid-column:span 3;width:100%;font-size:12px}
+#mobileControls .action{background:#14583e}
+.deathStat{padding:12px;background:#091426;border:1px solid var(--line);border-radius:12px;flex:1;min-width:130px}
+.deathStat strong{display:block;font-size:23px;color:#ff7777}
+@media(pointer:coarse){#mobileControls{display:grid}#help{max-width:48vw;font-size:10px}}
+@media(max-width:520px){
+ #hud{top:8px;left:8px;gap:5px}.pill{font-size:11px;padding:7px 9px}
+ #rightButtons{top:auto;bottom:225px;right:10px}
+ #rightButtons button{padding:8px;font-size:11px}.panel{padding:20px}
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud">
+ <div class="pill">💵 <b id="cash">$10,000</b></div>
+ <div class="pill">🚘 <b id="carName">Starter Sedan</b></div>
+ <div class="pill">⚡ <b id="speed">0</b> MPH</div>
+ <div class="pill">⭐ <b id="stars">☆☆☆☆☆☆</b></div>
+ <div class="pill">🏆 Level <b id="level">1</b></div>
+</div>
+
+<div id="rightButtons">
+ <button id="garageButton">🚘 Garage</button>
+ <button id="pauseButton">Ⅱ Pause</button>
+</div>
+
+<div id="help">
+ <b>CONTROLS</b><br>
+ WASD / Arrow keys — Drive<br>
+ Space — Handbrake<br>
+ E — Special ability (Missile Truck)<br>
+ Collect 💵 bags worth $1,000 each<br>
+ ⚠ Police/tank collision = PERMADEATH
+</div>
+
+<div id="toast"></div>
+
+<div id="startScreen" class="overlay">
+ <div class="panel">
+  <div class="eyebrow">A COMPLETELY NORMAL DRIVING GAME</div>
+  <h1>wow car<br><span>game</span></h1>
+  <p>Drive around a giant city, collect cash, unlock vehicles, and see how long you can survive the world's least competent police force.</p>
+  <p><b>⚠ PERMADEATH:</b> If a police car or tank hits you, you explode and lose all your money and purchased vehicles. Only your Starter Sedan survives in your garage.</p>
+  <div class="row">
+   <button class="primary" id="startButton">▶ PLAY GAME</button>
+   <button id="startGarage">🚘 View Garage</button>
+  </div>
+  <p style="font-size:12px;margin-top:20px">Featuring six-star chaos, questionable police driving, and an Antonov An-225 Mriya for absolutely no reason.</p>
+ </div>
+</div>
+
+<div id="garageScreen" class="overlay hidden">
+ <div class="panel">
+  <div class="eyebrow">VEHICLE COLLECTION</div>
+  <h2>🚘 The Garage</h2>
+  <p>Earn cash by collecting money bags. Any vehicle is available as soon as you can afford it — no level requirements.</p>
+  <div class="row">
+   <div class="pill">💵 Cash: <b id="garageCash">$10,000</b></div>
+  </div>
+  <div id="vehicleGrid" class="vehicleGrid"></div>
+  <div class="row"><button id="closeGarage" class="primary">Back to Driving</button></div>
+ </div>
+</div>
+
+<div id="pauseScreen" class="overlay hidden">
+ <div class="panel">
+  <div class="eyebrow">ENGINE OFF (TEMPORARILY)</div>
+  <h2>Game Paused</h2>
+  <p>The cops are probably driving into a building right now.</p>
+  <div class="row">
+   <button class="primary" id="resumeButton">▶ Resume</button>
+   <button id="pauseGarage">🚘 Garage</button>
+   <button id="restartButton">↻ New Run</button>
+  </div>
+ </div>
+</div>
+
+<div id="deathScreen" class="overlay hidden">
+ <div class="panel">
+  <div class="eyebrow" style="color:#ff7777">VEHICLE DESTROYED · RUN OVER</div>
+  <h1>YOU <span style="color:#ff7777">EXPLODED.</span></h1>
+  <p>Your vehicle was hit by the police. Your run has ended, and your cash and purchased vehicles have been lost.</p>
+  <div class="row">
+   <div class="deathStat"><span>Money lost</span><strong id="lostCash">$0</strong></div>
+   <div class="deathStat"><span>Vehicles lost</span><strong id="lostCars">0</strong></div>
+   <div class="deathStat"><span>Run level</span><strong id="lostLevel">1</strong></div>
+  </div>
+  <p>Good news: your Starter Sedan is always available. The rest? The insurance company has left the chat. 💀</p>
+  <div class="row">
+   <button class="primary" id="newRunButton">↻ TRY AGAIN</button>
+   <button id="deathGarageButton">🚘 View Garage</button>
+  </div>
+ </div>
+</div>
+
+<div id="mobileControls">
+ <div class="empty"></div><button data-key="ArrowUp">▲</button><div class="empty"></div>
+ <button data-key="ArrowLeft">◀</button><button data-key="ArrowDown">▼</button><button data-key="ArrowRight">▶</button>
+ <button class="wide" data-key="Space">HANDBRAKE</button>
+ <button class="wide action" data-key="KeyE">SPECIAL ABILITY</button>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2);
+
+function resize(){
+ W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2);
+ canvas.width=Math.floor(W*DPR);canvas.height=Math.floor(H*DPR);
+ canvas.style.width=W+"px";canvas.style.height=H+"px";
+ ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+addEventListener("resize",resize);resize();
+
+const WORLD=5200,BLOCK=520,ROAD=190;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rand=(a,b)=>a+Math.random()*(b-a);
+const choice=a=>a[Math.floor(Math.random()*a.length)];
+
+const vehicles=[
+ {id:0,name:"Starter Sedan",emoji:"🚗",color:"#5fa8ff",mph:72,accel:210,handling:2.7,level:1,price:0,desc:"A humble car. It gets the job done."},
+ {id:1,name:"Compact",emoji:"🚙",color:"#f2c14e",mph:88,accel:245,handling:3,level:2,price:10000,desc:"Small, nimble, and reasonably quick."},
+ {id:2,name:"Muscle Car",emoji:"🏎️",color:"#ed6b5a",mph:118,accel:310,handling:2.3,level:3,price:10000,desc:"Loud energy. Questionable cornering."},
+ {id:3,name:"Sports Car",emoji:"🚘",color:"#bd7cff",mph:145,accel:360,handling:3.1,level:4,price:10000,desc:"Fast enough to make bad decisions."},
+ {id:4,name:"SUV",emoji:"🚙",color:"#4dd6a4",mph:105,accel:270,handling:2,level:5,price:10000,desc:"Big, sturdy, and hard to miss."},
+ {id:5,name:"Police Interceptor",emoji:"🚓",color:"#e9f2ff",mph:132,accel:345,handling:3.2,level:6,price:10000,desc:"Look official. Absolutely do not act official."},
+ {id:6,name:"Supercar",emoji:"🏎️",color:"#ff7da7",mph:180,accel:430,handling:3.6,level:7,price:10000,desc:"A very expensive way to attract attention."},
+ {id:7,name:"Hypercar",emoji:"🚀",color:"#8cafff",mph:220,accel:500,handling:3.4,level:8,price:10000,desc:"The road is now a suggestion."},
+ {id:8,name:"Off-Roader",emoji:"🚙",color:"#c9a879",mph:112,accel:290,handling:2.6,level:9,price:10000,desc:"Built for bumps and questionable routes."},
+ {id:9,name:"Antonov An-225 Mriya",emoji:"✈️",color:"#f5f7ff",mph:160,accel:290,handling:1.5,level:10,price:500000,desc:"The legendary giant cargo aircraft. It drives around town."},
+ {id:10,name:"Missile Truck",emoji:"🚛",color:"#ff8b45",mph:95,accel:260,handling:1.9,level:11,price:10000,desc:"Press E for a fictional arcade projectile."}
+];
+
+let cash=10000,totalEarned=0,level=1;
+let owned=new Set([0]),currentVehicle=0;
+let running=false,paused=false,inGarage=false,dead=false;
+let lastTime=0,gameTime=0,wanted=0,wantedTimer=0;
+let copsSpawnTimer=0,copRammingTimer=0,abilityCooldown=0;
+let buildings=[],traffic=[],police=[],bags=[],projectiles=[],particles=[];
+const keys=Object.create(null);
+
+const player={x:WORLD/2,y:WORLD/2,vx:0,vy:0,angle:0,radius:20};
+
+function getVehicle(){return vehicles[currentVehicle];}
+
+function makeCity(){
+ buildings=[];
+ // Each city block is bounded by road centerlines at multiples of BLOCK.
+  // Buildings remain in the block interior, leaving roads clear.
+  for(let x=0;x<WORLD;x+=BLOCK){
+  for(let y=0;y<WORLD;y+=BLOCK){
+   const left=x+ROAD/2+24,top=y+ROAD/2+24;
+   const right=Math.min(x+BLOCK-ROAD/2-24,WORLD-24);
+   const bottom=Math.min(y+BLOCK-ROAD/2-24,WORLD-24);
+   if(right<=left||bottom<=top)continue;
+   const count=Math.floor(rand(2,6));
+   for(let i=0;i<count;i++){
+    const bw=rand(65,145),bh=rand(65,145);
+    buildings.push({
+     x:rand(left,Math.max(left,right-bw)),
+     y:rand(top,Math.max(top,bottom-bh)),
+     w:bw,h:bh,height:rand(25,110),
+     color:choice(["#25334a","#2b3850","#303c54","#263b49","#3b3c56"]),
+     roof:choice(["#43516a","#35445c","#4b4b67","#344c58"]),
+     windows:choice(["#f6d58a","#89cfff","#9be3cc","#7189a7"])
+    });
+   }
+  }
+ }
+}
+
+// Circle-versus-rectangle collision in world coordinates. This is used for
+// the player and pursuing vehicles, so buildings are solid gameplay obstacles.
+function resolveBuildingCollision(entity,radius){
+ let collided=false;
+ for(const b of buildings){
+  if(entity.x+radius<b.x||entity.x-radius>b.x+b.w||
+     entity.y+radius<b.y||entity.y-radius>b.y+b.h)continue;
+  const nx=clamp(entity.x,b.x,b.x+b.w);
+  const ny=clamp(entity.y,b.y,b.y+b.h);
+  let dx=entity.x-nx,dy=entity.y-ny;
+  let d=Math.hypot(dx,dy);
+  if(d<radius){
+   if(d>0.0001){
+    const push=radius-d;
+    entity.x+=(dx/d)*push;
+    entity.y+=(dy/d)*push;
+   }else{
+    // If the vehicle center is inside a building, push it out by the
+    // shortest route to a wall, including its collision radius.
+    const sides=[
+     {distance:Math.abs(entity.x-b.x),x:b.x-radius-1,y:entity.y},
+     {distance:Math.abs(b.x+b.w-entity.x),x:b.x+b.w+radius+1,y:entity.y},
+     {distance:Math.abs(entity.y-b.y),x:entity.x,y:b.y-radius-1},
+     {distance:Math.abs(b.y+b.h-entity.y),x:entity.x,y:b.y+b.h+radius+1}
+    ].sort((a,b)=>a.distance-b.distance);
+    entity.x=sides[0].x;entity.y=sides[0].y;
+   }
+   collided=true;
+  }
+ }
+ entity.x=clamp(entity.x,radius,WORLD-radius);
+ entity.y=clamp(entity.y,radius,WORLD-radius);
+ return collided;
+}
+
+function spawnTraffic(){
+ const vertical=Math.random()<.5, lane=Math.floor(rand(1,9))*BLOCK;
+ const dir=Math.random()<.5?1:-1;
+ traffic.push({
+  x:vertical?lane+choice([-ROAD*.23,ROAD*.23]):rand(0,WORLD),
+  y:vertical?rand(0,WORLD):lane+choice([-ROAD*.23,ROAD*.23]),
+  angle:vertical?(dir>0?Math.PI/2:-Math.PI/2):(dir>0?0:Math.PI),
+  dir,vertical,speed:rand(65,110),
+  color:choice(["#e4eaf4","#f3bd54","#ef7777","#67d7b3","#a9a0f9","#79aaff"]),
+  radius:14,hitCooldown:0
+ });
+}
+
+function spawnBag(){
+ let x=rand(80,WORLD-80),y=rand(80,WORLD-80);
+ if(Math.random()<.8){
+  if(Math.random()<.5)x=Math.round(x/BLOCK)*BLOCK+rand(-ROAD*.3,ROAD*.3);
+  else y=Math.round(y/BLOCK)*BLOCK+rand(-ROAD*.3,ROAD*.3);
+ }
+ bags.push({x:clamp(x,35,WORLD-35),y:clamp(y,35,WORLD-35),spin:rand(0,6.28)});
+}
+
+function spawnCop(){
+ const a=rand(0,Math.PI*2),d=rand(440,650);
+ police.push({
+  x:clamp(player.x+Math.cos(a)*d,30,WORLD-30),
+  y:clamp(player.y+Math.sin(a)*d,30,WORLD-30),
+  vx:0,vy:0,angle:a+Math.PI,speed:rand(100,140),radius:17,
+  tank:wanted>=6&&Math.random()<.38,ramTarget:null,ramTime:0
+ });
+}
+
+function toast(text){
+ const el=document.getElementById("toast");
+ el.textContent=text;el.classList.add("show");
+ clearTimeout(toast.timer);
+ toast.timer=setTimeout(()=>el.classList.remove("show"),1800);
+}
+
+function updateLevel(){
+ level=clamp(1+Math.floor(totalEarned/10000),1,20);
+ document.getElementById("level").textContent=level;
+}
+
+function updateHUD(){
+ document.getElementById("cash").textContent="$"+cash.toLocaleString();
+ document.getElementById("carName").textContent=getVehicle().name;
+ document.getElementById("garageCash").textContent="$"+cash.toLocaleString();
+ // Vehicle purchases have no level requirement.
+ document.getElementById("speed").textContent=Math.round(Math.hypot(player.vx,player.vy)/Math.max(1,getVehicle().mph*2.6)*getVehicle().mph);
+ document.getElementById("stars").textContent="★".repeat(wanted)+"☆".repeat(6-wanted);
+}
+
+function resetWorld(){
+ player.x=WORLD/2;player.y=WORLD/2;player.vx=player.vy=0;player.angle=0;
+ wanted=0;wantedTimer=0;copsSpawnTimer=0;copRammingTimer=0;abilityCooldown=0;
+ gameTime=0;traffic=[];police=[];bags=[];projectiles=[];particles=[];
+ makeCity();
+ for(let i=0;i<48;i++)spawnTraffic();
+ for(let i=0;i<65;i++)spawnBag();
+}
+
+function resetGame(){
+ cash=10000;totalEarned=0;level=1;
+ owned=new Set([0]);currentVehicle=0;
+ player.radius=20;dead=false;
+ resetWorld();updateHUD();
+}
+
+function openGarage(){
+ if(dead)return;
+ paused=true;inGarage=true;
+ document.getElementById("garageScreen").classList.remove("hidden");
+ document.getElementById("pauseScreen").classList.add("hidden");
+ document.getElementById("startScreen").classList.add("hidden");
+ renderGarage();
+}
+function closeGarage(){
+ inGarage=false;
+ document.getElementById("garageScreen").classList.add("hidden");
+ if(running&&!dead)paused=false;
+ else if(!running&&!dead)document.getElementById("startScreen").classList.remove("hidden");
+}
+function renderGarage(){
+ const grid=document.getElementById("vehicleGrid");grid.innerHTML="";
+ vehicles.forEach(v=>{
+  const isOwned=owned.has(v.id),selected=currentVehicle===v.id;
+  const card=document.createElement("div");
+  card.className="vehicle"+(selected?" selected":"");
+  const status=selected?"Currently selected":isOwned?"Owned":"Available to buy";
+  const button=document.createElement("button");
+  button.textContent=selected?"Selected":isOwned?"Select":"Buy for $"+v.price.toLocaleString();
+  button.disabled=selected||(!isOwned&&cash<v.price);
+  button.className=isOwned?"":"primary";
+  button.addEventListener("click",()=>{
+   if(dead)return;
+   if(isOwned){
+    currentVehicle=v.id;
+    player.radius=v.id===9?29:20;
+    updateHUD();renderGarage();toast(v.name+" selected!");
+   }else if(cash>=v.price){
+    cash-=v.price;owned.add(v.id);currentVehicle=v.id;
+    player.radius=v.id===9?29:20;
+    updateHUD();renderGarage();toast("Purchased "+v.name+"!");
+   }
+  });
+  card.innerHTML='<div class="emoji">'+v.emoji+'</div><b>'+v.name+'</b>'+
+   '<small>'+v.desc+'</small><small>Top speed: '+v.mph+' MPH · Level '+v.level+'</small>'+
+   '<small>'+status+'</small>';
+  card.appendChild(button);grid.appendChild(card);
+ });
+}
+
+function spawnProjectile(){
+ if(dead||paused||inGarage)return;
+ if(abilityCooldown>0){toast("Special ability recharging!");return;}
+ if(currentVehicle!==10){toast("The Missile Truck is the only vehicle with a special ability.");return;}
+ const speed=Math.hypot(player.vx,player.vy);
+ const dir=speed>25?Math.atan2(player.vy,player.vx):player.angle;
+ projectiles.push({
+  x:player.x+Math.cos(dir)*36,y:player.y+Math.sin(dir)*36,
+  vx:Math.cos(dir)*520,vy:Math.sin(dir)*520,life:1.5
+ });
+ abilityCooldown=2.5;toast("🚀 ARCADE PROJECTILE AWAY!");
+}
+
+/* PERMADEATH: a police car or tank collision ends the run immediately. */
+function explodePlayer(cop){
+ if(dead)return;
+ dead=true;running=false;paused=true;inGarage=false;
+
+ const lostCash=cash;
+ const lostCars=Math.max(0,owned.size-1);
+ const lostLevel=level;
+
+ // A bright, non-graphic arcade explosion.
+ for(let i=0;i<70;i++){
+  const a=Math.random()*Math.PI*2;
+  const speed=rand(70,330);
+  particles.push({
+   x:player.x,y:player.y,
+   vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,
+   life:rand(.5,1.5),size:rand(2,9),
+   color:choice(["#ff613d","#ff9b42","#ffe16b","#f7f7ff","#ff4e73"])
+  });
+ }
+ for(let i=0;i<20;i++){
+  const a=Math.random()*Math.PI*2;
+  particles.push({
+   x:player.x,y:player.y,vx:Math.cos(a)*rand(20,160),
+   vy:Math.sin(a)*rand(20,160),life:rand(.4,1.2),
+   size:rand(5,12),color:"#202a3c"
+  });
+ }
+
+ // Lose cash and every purchased vehicle. The starter car is retained.
+ cash=0;totalEarned=0;level=1;
+ owned=new Set([0]);currentVehicle=0;player.radius=20;
+ wanted=0;police=[];traffic=[];bags=[];projectiles=[];
+ player.vx=0;player.vy=0;
+
+ document.getElementById("lostCash").textContent="$"+lostCash.toLocaleString();
+ document.getElementById("lostCars").textContent=lostCars;
+ document.getElementById("lostLevel").textContent=lostLevel;
+ updateHUD();
+ renderGarage();
+
+ // Let the explosion finish animating behind the game-over screen.
+ setTimeout(()=>{
+  document.getElementById("deathScreen").classList.remove("hidden");
+ },650);
+}
+
+function screen(x,y){
+ const dx=x-player.x,dy=y-player.y;
+ return {x:W/2+dx-dy*.34,y:H/2+dy+dx*.16};
+}
+function worldLine(x1,y1,x2,y2,color,width){
+ const a=screen(x1,y1),b=screen(x2,y2);
+ ctx.strokeStyle=color;ctx.lineWidth=width;
+ ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+}
+function drawGround(){
+ ctx.fillStyle="#172a2d";ctx.fillRect(0,0,W,H);
+}
+function drawRoads(){
+ const x0=Math.max(0,Math.floor((player.x-1700)/BLOCK)*BLOCK);
+ const x1=Math.min(WORLD,Math.ceil((player.x+1700)/BLOCK)*BLOCK);
+ const y0=Math.max(0,Math.floor((player.y-1700)/BLOCK)*BLOCK);
+ const y1=Math.min(WORLD,Math.ceil((player.y+1700)/BLOCK)*BLOCK);
+ for(let x=x0;x<=x1;x+=BLOCK){
+  worldLine(x,0,x,WORLD,"#323b4b",ROAD);
+  worldLine(x,0,x,WORLD,"#454d5c",ROAD-10);
+  worldLine(x,0,x,WORLD,"#c0b99a",2);
+  for(let y=y0-120;y<y1+120;y+=65)worldLine(x,y,x,y+28,"#a4a9b1",2);
+ }
+ for(let y=y0;y<=y1;y+=BLOCK){
+  worldLine(0,y,WORLD,y,"#323b4b",ROAD);
+  worldLine(0,y,WORLD,y,"#454d5c",ROAD-10);
+  worldLine(0,y,WORLD,y,"#c0b99a",2);
+  for(let x=x0-120;x<x1+120;x+=65)worldLine(x,y,x+28,y,"#a4a9b1",2);
+ }
+}
+function drawBuilding(b){
+ const c=[screen(b.x,b.y),screen(b.x+b.w,b.y),screen(b.x+b.w,b.y+b.h),screen(b.x,b.y+b.h)];
+ const h=b.height,u=c.map(p=>({x:p.x,y:p.y-h}));
+ ctx.fillStyle="#151d2b";
+ ctx.beginPath();ctx.moveTo(c[1].x,c[1].y);ctx.lineTo(c[2].x,c[2].y);ctx.lineTo(u[2].x,u[2].y);ctx.lineTo(u[1].x,u[1].y);ctx.closePath();ctx.fill();
+ ctx.fillStyle="#202b3d";
+ ctx.beginPath();ctx.moveTo(c[2].x,c[2].y);ctx.lineTo(c[3].x,c[3].y);ctx.lineTo(u[3].x,u[3].y);ctx.lineTo(u[2].x,u[2].y);ctx.closePath();ctx.fill();
+ ctx.fillStyle=b.roof;
+ ctx.beginPath();ctx.moveTo(u[0].x,u[0].y);u.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();ctx.fill();
+ ctx.strokeStyle="#62738a";ctx.lineWidth=1.2;ctx.stroke();
+ ctx.fillStyle=b.color;
+ ctx.beginPath();ctx.moveTo(u[0].x+6,u[0].y+6);ctx.lineTo(u[1].x-6,u[1].y+6);ctx.lineTo(u[2].x-6,u[2].y-6);ctx.lineTo(u[3].x+6,u[3].y-6);ctx.closePath();ctx.fill();
+ ctx.fillStyle=b.windows;
+ for(let i=1;i<4;i++){
+  const px=u[0].x+(u[1].x-u[0].x)*i/4;
+  const py=u[0].y+(u[1].y-u[0].y)*i/4;
+  ctx.fillRect(px-2,py+10,4,10);
+ }
+}
+function drawBuildings(){
+ buildings.filter(b=>Math.abs(b.x+b.w/2-player.x)<1500&&Math.abs(b.y+b.h/2-player.y)<1500)
+  .sort((a,b)=>(a.x+a.y)-(b.x+b.y)).forEach(drawBuilding);
+}
+function drawCar(x,y,angle,color,scale=1,type="car",isPlayer=false){
+ const p=screen(x,y);
+ ctx.save();ctx.translate(p.x,p.y);ctx.rotate(angle+.16);ctx.scale(scale,scale);
+ ctx.fillStyle="#0007";ctx.beginPath();ctx.ellipse(2,5,25,14,0,0,Math.PI*2);ctx.fill();
+ if(type==="plane"){
+  ctx.fillStyle="#dce5f2";
+  ctx.beginPath();ctx.moveTo(37,0);ctx.lineTo(12,-7);ctx.lineTo(1,-28);ctx.lineTo(-7,-28);
+  ctx.lineTo(-4,-7);ctx.lineTo(-29,-12);ctx.lineTo(-35,-8);ctx.lineTo(-12,0);
+  ctx.lineTo(-35,8);ctx.lineTo(-29,12);ctx.lineTo(-4,7);ctx.lineTo(-7,28);
+  ctx.lineTo(1,28);ctx.lineTo(12,7);ctx.closePath();ctx.fill();
+  ctx.strokeStyle="#7c94b1";ctx.stroke();
+ }else if(type==="truck"){
+  ctx.fillStyle="#9da8b8";ctx.fillRect(-24,-13,30,26);
+  ctx.fillStyle=color;ctx.fillRect(6,-11,17,22);
+  ctx.fillStyle="#8ad8ff";ctx.fillRect(10,-8,9,7);ctx.fillRect(10,2,9,6);
+ }else{
+  ctx.fillStyle="#101721";ctx.fillRect(-18,-14,12,5);ctx.fillRect(7,-14,12,5);ctx.fillRect(-18,9,12,5);ctx.fillRect(7,9,12,5);
+  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(25,0);ctx.lineTo(15,-11);ctx.lineTo(-15,-11);ctx.lineTo(-23,-7);ctx.lineTo(-23,7);ctx.lineTo(-15,11);ctx.lineTo(15,11);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#a6d8ef";ctx.beginPath();ctx.moveTo(11,-7);ctx.lineTo(3,-7);ctx.lineTo(3,7);ctx.lineTo(11,7);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#25394b";ctx.fillRect(-11,-7,10,14);
+  ctx.fillStyle="#ffefb1";ctx.fillRect(20,-7,4,4);ctx.fillRect(20,3,4,4);
+  ctx.fillStyle="#fa6969";ctx.fillRect(-23,-7,3,4);ctx.fillRect(-23,3,3,4);
+  if(type==="police"){ctx.fillStyle="#4f9dff";ctx.fillRect(-3,-12,6,4);ctx.fillStyle="#ff555d";ctx.fillRect(3,-12,6,4);}
+ }
+ if(isPlayer){ctx.strokeStyle="#bde5ff";ctx.lineWidth=1.5;ctx.strokeRect(-26,-17,52,34);}
+ ctx.restore();
+}
+function drawBags(){
+ bags.forEach(b=>{
+  const p=screen(b.x,b.y);if(p.x<-40||p.x>W+40||p.y<-40||p.y>H+40)return;
+  const pulse=1+Math.sin(gameTime*5+b.spin)*.12;
+  ctx.save();ctx.translate(p.x,p.y);ctx.scale(pulse,pulse);
+  ctx.fillStyle="#65f2ad33";ctx.beginPath();ctx.arc(0,0,19,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#6ef3a9";ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#143c2b";ctx.font="bold 15px Arial";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("$",0,1);
+  ctx.restore();
+ });
+}
+function drawEffects(){
+ particles.forEach(p=>{
+  const s=screen(p.x,p.y);ctx.globalAlpha=clamp(p.life,0,1);
+  ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(s.x,s.y,p.size,0,Math.PI*2);ctx.fill();
+ });
+ ctx.globalAlpha=1;
+}
+function drawProjectiles(){
+ projectiles.forEach(p=>{
+  const s=screen(p.x,p.y);ctx.fillStyle="#ffb55c";
+  ctx.beginPath();ctx.arc(s.x,s.y,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#fff0a6";ctx.beginPath();ctx.arc(s.x,s.y,3,0,Math.PI*2);ctx.fill();
+ });
+}
+function drawMinimap(){
+ const mw=120,mh=120,pad=15,x=W-mw-pad,y=H-mh-pad;
+ ctx.fillStyle="#07101ddd";ctx.fillRect(x,y,mw,mh);
+ ctx.strokeStyle="#7c9bc9";ctx.strokeRect(x,y,mw,mh);
+ ctx.fillStyle="#46556c";
+ for(let i=0;i<=WORLD;i+=BLOCK){ctx.fillRect(x+i/WORLD*mw-1,y,3,mh);ctx.fillRect(x,y+i/WORLD*mh-1,mw,3);}
+ ctx.fillStyle="#65f2ad";ctx.beginPath();ctx.arc(x+player.x/WORLD*mw,y+player.y/WORLD*mh,3.5,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#ff6464";police.forEach(c=>ctx.fillRect(x+c.x/WORLD*mw-1,y+c.y/WORLD*mh-1,3,3));
+}
+
+function draw(){
+ ctx.clearRect(0,0,W,H);drawGround();drawRoads();drawBuildings();drawBags();
+ traffic.forEach(c=>drawCar(c.x,c.y,c.angle,c.color,.82));
+ police.forEach(c=>drawCar(c.x,c.y,c.angle,c.tank?"#d6aa69":"#f1f4fb",c.tank?1.2:.9,c.tank?"truck":"police"));
+ drawProjectiles();
+ // Do not draw the player's vehicle once the death animation starts.
+ if(!dead)drawCar(player.x,player.y,player.angle,getVehicle().color,currentVehicle===9?1.15:1,currentVehicle===9?"plane":currentVehicle===10?"truck":"car",true);
+ drawEffects();drawMinimap();
+ police.forEach(c=>{
+  const p=screen(c.x,c.y);
+  if(p.x>10&&p.x<W-10&&p.y>10&&p.y<H-10)return;
+  const angle=Math.atan2(p.y-H/2,p.x-W/2),r=Math.min(W,H)*.43;
+  ctx.save();ctx.translate(W/2+Math.cos(angle)*r,H/2+Math.sin(angle)*r);ctx.rotate(angle);
+  ctx.fillStyle="#ff6969";ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-7,-6);ctx.lineTo(-7,6);ctx.closePath();ctx.fill();ctx.restore();
+ });
+}
+
+function update(dt){
+ // Keep the explosion particles animating after death, but stop gameplay.
+ if(dead){
+  particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.98;p.vy*=.98;p.life-=dt;});
+  particles=particles.filter(p=>p.life>0);
+  return;
+ }
+ if(!running||paused||inGarage)return;
+ gameTime+=dt;abilityCooldown=Math.max(0,abilityCooldown-dt);
+ copsSpawnTimer-=dt;copRammingTimer-=dt;wantedTimer-=dt;
+ const v=getVehicle();let ax=0,ay=0;
+ const previousPlayerX=player.x,previousPlayerY=player.y;
+ if(keys.KeyW||keys.ArrowUp)ay-=1;
+ if(keys.KeyS||keys.ArrowDown)ay+=1;
+ if(keys.KeyA||keys.ArrowLeft)ax-=1;
+ if(keys.KeyD||keys.ArrowRight)ax+=1;
+ const inputLength=Math.hypot(ax,ay);
+ if(inputLength>0){ax/=inputLength;ay/=inputLength;}
+ player.vx+=ax*v.accel*dt;player.vy+=ay*v.accel*dt;
+ if(inputLength>0){
+  const desired=Math.atan2(ay,ax);
+  const delta=Math.atan2(Math.sin(desired-player.angle),Math.cos(desired-player.angle));
+  player.angle+=delta*Math.min(1,dt*v.handling);
+ }
+ const speed=Math.hypot(player.vx,player.vy),maxSpeed=v.mph*2.6,maxNow=keys.Space?maxSpeed*.43:maxSpeed;
+ if(speed>maxNow){player.vx=player.vx/speed*maxNow;player.vy=player.vy/speed*maxNow;}
+ const drag=keys.Space?2.5:1.15;
+ player.vx*=Math.max(0,1-drag*dt);player.vy*=Math.max(0,1-drag*dt);
+ player.x=clamp(player.x+player.vx*dt,20,WORLD-20);
+ player.y=clamp(player.y+player.vy*dt,20,WORLD-20);
+ if(resolveBuildingCollision(player,player.radius)){
+  const movedX=player.x-previousPlayerX,movedY=player.y-previousPlayerY;
+  if(Math.abs(movedX)>Math.abs(movedY))player.vx=0;
+  else player.vy=0;
+ }
+
+ traffic.forEach(c=>{
+  c.hitCooldown=Math.max(0,c.hitCooldown-dt);
+  if(c.vertical){
+   c.y+=c.dir*c.speed*dt;c.x+=(Math.round(c.x/BLOCK)*BLOCK-c.x)*dt*.7;
+   if(c.y<20)c.y=WORLD-20;if(c.y>WORLD-20)c.y=20;
+  }else{
+   c.x+=c.dir*c.speed*dt;c.y+=(Math.round(c.y/BLOCK)*BLOCK-c.y)*dt*.7;
+   if(c.x<20)c.x=WORLD-20;if(c.x>WORLD-20)c.x=20;
+  }
+  c.angle=c.vertical?(c.dir>0?Math.PI/2:-Math.PI/2):(c.dir>0?0:Math.PI);
+  if(resolveBuildingCollision(c,c.radius))c.dir*=-1;
+  if(Math.hypot(c.x-player.x,c.y-player.y)<34&&c.hitCooldown<=0){
+   player.vx+=(player.x-c.x)*3;player.vy+=(player.y-c.y)*3;
+   c.dir*=-1;c.hitCooldown=1.1;wanted=Math.min(6,wanted+1);wantedTimer=12;
+   toast("🚨 Traffic collision! Wanted level increased.");
+  }
+ });
+
+ for(let i=bags.length-1;i>=0;i--){
+  const b=bags[i];
+  if(Math.hypot(b.x-player.x,b.y-player.y)<38){
+   bags.splice(i,1);cash+=1000;totalEarned+=1000;updateLevel();updateHUD();spawnBag();toast("💵 +$1,000!");
+  }
+ }
+
+ if(wanted>0&&wantedTimer<=0&&police.length===0){wanted=Math.max(0,wanted-1);wantedTimer=9;}
+ if(wanted>0&&copsSpawnTimer<=0){
+  const targetCount=Math.min(2+wanted*2,12);
+  if(police.length<targetCount)spawnCop();
+  copsSpawnTimer=Math.max(.7,3.2-wanted*.35);
+ }
+ if(wanted===6&&police.filter(c=>c.tank).length<2&&Math.random()<.025){
+  const c=choice(police);if(c)c.tank=true;
+ }
+
+ // About every five seconds, cops have a 90% chance of attempting a building ram.
+ if(police.length&&copRammingTimer<=0){
+  copRammingTimer=5;
+  if(Math.random()<.9){
+   police.forEach(c=>{
+    const nearby=buildings.filter(b=>Math.abs(b.x-c.x)<700&&Math.abs(b.y-c.y)<700);
+    if(nearby.length){const b=choice(nearby);c.ramTarget={x:b.x+b.w/2,y:b.y+b.h/2};c.ramTime=3.5;}
+   });
+  }
+ }
+
+ for(const c of police){
+  const previousCopX=c.x,previousCopY=c.y;
+  let tx=player.x,ty=player.y;
+  if(c.ramTime>0&&c.ramTarget){c.ramTime-=dt;tx=c.ramTarget.x;ty=c.ramTarget.y;}
+  else c.ramTarget=null;
+  const dx=tx-c.x,dy=ty-c.y,d=Math.hypot(dx,dy)||1;
+  const speed=c.tank?105:c.speed+wanted*13;
+  const desired=Math.atan2(dy,dx);
+  const da=Math.atan2(Math.sin(desired-c.angle),Math.cos(desired-c.angle));
+  c.angle+=clamp(da,-dt*1.8,dt*1.8);
+  c.vx=Math.cos(c.angle)*speed;c.vy=Math.sin(c.angle)*speed;
+  c.x=clamp(c.x+c.vx*dt,15,WORLD-15);
+  c.y=clamp(c.y+c.vy*dt,15,WORLD-15);
+  if(resolveBuildingCollision(c,c.tank?23:18)){
+   c.vx=0;c.vy=0;c.ramTarget=null;c.ramTime=0;
+  }
+
+  // Swept collision catches fast vehicles even if they cross between frames.
+  const relStartX=previousCopX-previousPlayerX;
+  const relStartY=previousCopY-previousPlayerY;
+  const relEndX=c.x-player.x,relEndY=c.y-player.y;
+  const relDX=relEndX-relStartX,relDY=relEndY-relStartY;
+  const denom=relDX*relDX+relDY*relDY;
+  const t=denom>0?clamp(-(relStartX*relDX+relStartY*relDY)/denom,0,1):0;
+  const closest=Math.hypot(relStartX+relDX*t,relStartY+relDY*t);
+  if(closest<player.radius+(c.tank?25:19)+5){
+   explodePlayer(c);
+   break;
+  }
+ }
+ if(dead)return;
+
+ projectiles.forEach(p=>{
+  p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+  for(const c of traffic){
+   if(Math.hypot(p.x-c.x,p.y-c.y)<30){
+    c.dir*=-1;c.speed+=35;c.hitCooldown=1.5;p.life=0;
+    for(let j=0;j<8;j++)particles.push({
+     x:c.x,y:c.y,vx:rand(-90,90),vy:rand(-90,90),life:rand(.3,.8),size:rand(2,5),
+     color:choice(["#ffbe6b","#ffe59a","#e7f2ff"])
+    });
+    break;
+   }
+  }
+  for(const c of police){
+   if(Math.hypot(p.x-c.x,p.y-c.y)<32){
+    c.vx+=p.vx*.8;c.vy+=p.vy*.8;
+    c.x=clamp(c.x+rand(-45,45),15,WORLD-15);
+    c.y=clamp(c.y+rand(-45,45),15,WORLD-15);p.life=0;break;
+   }
+  }
+ });
+ projectiles=projectiles.filter(p=>p.life>0&&p.x>0&&p.x<WORLD&&p.y>0&&p.y<WORLD);
+ particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;});
+ particles=particles.filter(p=>p.life>0);
+ if(traffic.length<48)spawnTraffic();
+ if(bags.length<65)spawnBag();
+ updateHUD();
+}
+
+function loop(timestamp){
+ const dt=Math.min(.035,(timestamp-lastTime)/1000||0);
+ lastTime=timestamp;update(dt);draw();requestAnimationFrame(loop);
+}
+
+function startGame(){
+ if(dead)return;
+ running=true;paused=false;inGarage=false;
+ document.getElementById("startScreen").classList.add("hidden");
+ document.getElementById("pauseScreen").classList.add("hidden");
+ document.getElementById("garageScreen").classList.add("hidden");
+ toast("Good luck. The cops are not very smart.");
+}
+function pauseGame(){
+ if(!running||dead||inGarage)return;
+ paused=true;document.getElementById("pauseScreen").classList.remove("hidden");
+}
+function resumeGame(){
+ if(dead)return;
+ paused=false;document.getElementById("pauseScreen").classList.add("hidden");
+}
+function restartGame(){
+ resetGame();running=false;paused=false;inGarage=false;
+ document.getElementById("pauseScreen").classList.add("hidden");
+ document.getElementById("garageScreen").classList.add("hidden");
+ document.getElementById("deathScreen").classList.add("hidden");
+ document.getElementById("startScreen").classList.remove("hidden");
+}
+function tryAgain(){
+ resetGame();running=true;paused=false;inGarage=false;
+ document.getElementById("deathScreen").classList.add("hidden");
+ document.getElementById("pauseScreen").classList.add("hidden");
+ document.getElementById("garageScreen").classList.add("hidden");
+ document.getElementById("startScreen").classList.add("hidden");
+ toast("New run! Your Starter Sedan is ready.");
+}
+
+addEventListener("keydown",e=>{
+ keys[e.code]=true;
+ if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();
+ if(e.code==="Escape"){
+  if(dead)return;
+  if(inGarage)closeGarage();else if(paused)resumeGame();else pauseGame();
+ }
+ if(e.code==="KeyE"&&!e.repeat)spawnProjectile();
+});
+addEventListener("keyup",e=>keys[e.code]=false);
+addEventListener("blur",()=>{for(const k in keys)keys[k]=false;});
+
+document.querySelectorAll("#mobileControls button[data-key]").forEach(btn=>{
+ const key=btn.dataset.key;
+ const down=e=>{e.preventDefault();keys[key]=true;if(key==="KeyE")spawnProjectile();};
+ const up=e=>{e.preventDefault();keys[key]=false;};
+ btn.addEventListener("pointerdown",down);
+ btn.addEventListener("pointerup",up);
+ btn.addEventListener("pointerleave",up);
+ btn.addEventListener("pointercancel",up);
+});
+
+document.getElementById("startButton").addEventListener("click",startGame);
+document.getElementById("startGarage").addEventListener("click",openGarage);
+document.getElementById("garageButton").addEventListener("click",openGarage);
+document.getElementById("pauseButton").addEventListener("click",pauseGame);
+document.getElementById("closeGarage").addEventListener("click",closeGarage);
+document.getElementById("resumeButton").addEventListener("click",resumeGame);
+document.getElementById("pauseGarage").addEventListener("click",openGarage);
+document.getElementById("restartButton").addEventListener("click",restartGame);
+document.getElementById("newRunButton").addEventListener("click",tryAgain);
+document.getElementById("deathGarageButton").addEventListener("click",()=>{
+ document.getElementById("deathScreen").classList.add("hidden");
+ document.getElementById("garageScreen").classList.remove("hidden");
+ renderGarage();
+ // The player is still dead; garage is for viewing the remaining starter vehicle.
+});
+
+resetGame();renderGarage();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
