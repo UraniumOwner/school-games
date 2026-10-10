@@ -1,2108 +1,1086 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>DumbGPT</title>
-
+<title>wow car game</title>
 <style>
-* {
-    box-sizing: border-box;
+:root {
+  --bg: #080d18;
+  --panel: rgba(12, 21, 39, .94);
+  --line: rgba(139, 174, 255, .22);
+  --blue: #69a8ff;
+  --green: #65f2ad;
+  --text: #eef4ff;
+  --muted: #a3b1c9;
 }
-
+* { box-sizing: border-box; }
 body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: Arial, Helvetica, sans-serif;
-    background:
-        radial-gradient(circle at top, #35145a 0%, #160727 45%, #08030f 100%);
-    color: white;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, Arial, sans-serif;
 }
-
-button,
-input {
-    font: inherit;
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
-
 button {
-    cursor: pointer;
+  color: var(--text);
+  background: #172844;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: .15s;
 }
-
-.app {
-    width: 100%;
-    max-width: 1000px;
-    margin: auto;
-    min-height: 100vh;
-    padding: 18px;
+button:hover { background: #25416c; transform: translateY(-1px); }
+button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+#hud {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  z-index: 2;
+  max-width: calc(100vw - 28px);
+  pointer-events: none;
 }
-
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 20px;
-    background: rgba(15, 5, 25, 0.9);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
+.pill {
+  background: rgba(8, 15, 29, .86);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  padding: 9px 13px;
+  border-radius: 12px;
+  font-size: 13px;
+  box-shadow: 0 5px 22px #0003;
 }
-
-.logo {
-    font-size: 27px;
-    font-weight: 900;
+.pill b { color: var(--green); }
+#rightButtons {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
 }
-
-.logo span {
-    color: #a100ff;
+#help {
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  z-index: 2;
+  background: rgba(8, 15, 29, .83);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 13px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  pointer-events: none;
 }
-
-.status {
-    font-size: 13px;
-    color: #91ffad;
+#toast {
+  position: fixed;
+  z-index: 8;
+  top: 82px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #101f35;
+  border: 1px solid #4d83c7;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-weight: 800;
+  text-align: center;
+  opacity: 0;
+  transition: opacity .2s;
+  pointer-events: none;
+  max-width: 90vw;
 }
-
-.main {
-    margin-top: 18px;
+#toast.show { opacity: 1; }
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(3, 7, 16, .78);
+  backdrop-filter: blur(10px);
+  overflow-y: auto;
 }
-
+.hidden { display: none !important; }
 .panel {
-    background: rgba(12, 3, 23, 0.9);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 18px;
-    overflow: hidden;
+  width: min(760px, 100%);
+  max-height: 94vh;
+  overflow-y: auto;
+  padding: 26px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 25px 100px #0009;
 }
-
-.screen {
-    padding: 25px;
-    min-height: 650px;
+h1 {
+  font-size: clamp(38px, 8vw, 74px);
+  letter-spacing: -3px;
+  line-height: .94;
+  margin: 8px 0 14px;
 }
-
-.hidden {
-    display: none !important;
+h1 span { color: var(--blue); }
+h2 { margin: 0 0 10px; }
+p { color: var(--muted); line-height: 1.6; }
+.eyebrow {
+  color: var(--green);
+  font-size: 11px;
+  letter-spacing: 3px;
+  font-weight: 900;
 }
-
-h1,
-h2,
-h3 {
-    margin-top: 0;
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.primary {
+  color: #071321;
+  background: linear-gradient(135deg, #79b9ff, #65f2ad);
+  border: none;
 }
-
-.subtitle {
-    color: #b3a8c2;
-    line-height: 1.6;
+.primary:hover { background: linear-gradient(135deg, #a1ceff, #94ffd0); }
+.vehicleGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+  gap: 10px;
+  margin: 18px 0;
 }
-
-.progress-area {
-    margin: 25px 0;
+.vehicle {
+  border: 1px solid var(--line);
+  background: #0c1629;
+  border-radius: 14px;
+  padding: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 175px;
 }
-
-.progress-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
+.vehicle.selected { border-color: var(--green); box-shadow: 0 0 0 1px #65f2ad44; }
+.vehicle .emoji { font-size: 30px; }
+.vehicle small { color: var(--muted); line-height: 1.45; }
+.vehicle button { margin-top: auto; }
+#mobileControls {
+  display: none;
+  position: fixed;
+  z-index: 4;
+  bottom: 15px;
+  right: 15px;
+  grid-template-columns: repeat(3, 46px);
+  gap: 5px;
 }
-
-.progress-bar {
-    height: 15px;
-    background: #261631;
-    border-radius: 99px;
-    overflow: hidden;
+#mobileControls button {
+  width: 46px; height: 46px;
+  padding: 0;
+  background: #0a1629dd;
+  touch-action: none;
+  font-size: 18px;
 }
-
-.progress-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #7b00ff, #c400ff);
-    transition: width 0.3s ease;
+#mobileControls .empty { visibility: hidden; }
+#mobileControls .wide { grid-column: span 3; width: 100%; font-size: 12px; }
+#mobileControls .action { background: #14583e; }
+@media (pointer: coarse) {
+  #mobileControls { display: grid; }
+  #help { max-width: 48vw; font-size: 10px; }
 }
-
-.tutorial-card,
-.mission-card {
-    background: rgba(255,255,255,0.045);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 24px;
-}
-
-.word {
-    text-align: center;
-    font-size: 42px;
-    font-weight: 900;
-    margin: 28px 0;
-}
-
-.instruction {
-    text-align: center;
-    color: #bdb2ca;
-}
-
-.buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 18px;
-}
-
-button {
-    border: 0;
-    border-radius: 11px;
-    padding: 12px 18px;
-    background: #9b00ff;
-    color: white;
-    font-weight: 800;
-}
-
-button:hover {
-    filter: brightness(1.15);
-}
-
-button.secondary {
-    background: #30223b;
-}
-
-button.danger {
-    background: #8d2344;
-}
-
-.message {
-    margin-top: 15px;
-    padding: 14px;
-    border-radius: 11px;
-    background: rgba(255,255,255,0.05);
-    color: #ddd4e4;
-}
-
-.success {
-    color: #76ff9b;
-}
-
-.error {
-    color: #ff7474;
-}
-
-.complete {
-    text-align: center;
-    padding: 80px 20px;
-}
-
-.complete .emoji {
-    font-size: 70px;
-}
-
-.complete h1 {
-    font-size: 40px;
-}
-
-.stats-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 16px 0;
-}
-
-.stat-pill {
-    background: #1d0c2b;
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 8px 12px;
-    border-radius: 9px;
-    font-size: 13px;
-}
-
-.game-layout {
-    display: grid;
-    grid-template-columns: 1fr 220px;
-    gap: 16px;
-}
-
-.chat {
-    height: 500px;
-    overflow-y: auto;
-    padding: 16px;
-    background: #10021c;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-}
-
-.bubble {
-    max-width: 85%;
-    padding: 11px 13px;
-    margin-bottom: 10px;
-    border-radius: 12px;
-    line-height: 1.45;
-    white-space: pre-wrap;
-}
-
-.bubble.bot {
-    background: #25083d;
-    margin-right: auto;
-}
-
-.bubble.player {
-    background: #a000ff;
-    margin-left: auto;
-}
-
-.bubble.system {
-    max-width: 95%;
-    margin: 12px auto;
-    text-align: center;
-    background: #170a20;
-    color: #a79baa;
-    font-size: 12px;
-}
-
-.input-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.input-row input {
-    flex: 1;
-    min-width: 0;
-    background: #13051e;
-    color: white;
-    border: 1px solid #7f00d9;
-    border-radius: 10px;
-    padding: 13px;
-    outline: none;
-}
-
-.input-row input:focus {
-    border-color: #c000ff;
-}
-
-.sidebar {
-    background: rgba(255,255,255,0.035);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 16px;
-}
-
-.stat {
-    padding: 11px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.stat:last-child {
-    border-bottom: 0;
-}
-
-.stat-label {
-    color: #96899e;
-    font-size: 11px;
-    text-transform: uppercase;
-}
-
-.stat-value {
-    margin-top: 4px;
-    font-weight: 800;
-}
-
-.challenge-title {
-    margin-bottom: 5px;
-}
-
-.challenge-subtitle {
-    color: #b3a8c2;
-    margin-top: 0;
-}
-
-.footer {
-    text-align: center;
-    color: #62576b;
-    font-size: 11px;
-    margin-top: 20px;
-}
-
-@media (max-width: 750px) {
-    .game-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .screen {
-        padding: 16px;
-    }
+@media (max-width: 520px) {
+  #hud { top: 8px; left: 8px; gap: 5px; }
+  .pill { font-size: 11px; padding: 7px 9px; }
+  #rightButtons { top: auto; bottom: 225px; right: 10px; }
+  #rightButtons button { padding: 8px; font-size: 11px; }
+  .panel { padding: 20px; }
 }
 </style>
 </head>
-
 <body>
-
-<div class="app">
-
-<header class="header">
-    <div class="logo">
-        Dumb<span>GPT</span>
-    </div>
-
-    <div class="status">
-        Online — unfortunately
-    </div>
-</header>
-
-<main class="main">
-
-<div class="panel">
-
-<!-- =====================================================
-     TUTORIAL
-===================================================== -->
-
-<section id="tutorialScreen" class="screen">
-
-    <h1>📚 Tutorial — Teach DumbGPT</h1>
-
-    <p class="subtitle">
-        You MUST complete the tutorial before entering the actual game.
-        Teach DumbGPT how to type 10 words.
-    </p>
-
-    <div class="progress-area">
-
-        <div class="progress-header">
-            <strong>Progress</strong>
-            <strong id="tutorialPercent">0%</strong>
-        </div>
-
-        <div class="progress-bar">
-            <div id="tutorialFill" class="progress-fill"></div>
-        </div>
-
-    </div>
-
-    <div class="tutorial-card">
-
-        <h2 id="tutorialTitle">
-            Word 1 of 10
-        </h2>
-
-        <p id="tutorialInstruction" class="instruction">
-            Tell DumbGPT to type the word.
-        </p>
-
-        <div id="tutorialWord" class="word">
-            hello
-        </div>
-
-        <div class="buttons">
-
-            <button onclick="tutorialType()">
-                Type it
-            </button>
-
-            <button
-                id="againButton"
-                class="secondary hidden"
-                onclick="tutorialAgain()">
-                Type it again
-            </button>
-
-            <button
-                id="retryButton"
-                class="danger hidden"
-                onclick="tutorialRetry()">
-                Retry word
-            </button>
-
-        </div>
-
-        <div id="tutorialMessage" class="message">
-            DumbGPT is ready to learn.
-        </div>
-
-    </div>
-
-    <div class="footer">
-        No skipping. You are legally required to educate this idiot. 😭
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     TUTORIAL COMPLETE
-===================================================== -->
-
-<section id="completeScreen" class="screen hidden">
-
-    <div class="complete">
-
-        <div class="emoji">
-            🎉
-        </div>
-
-        <h1>TUTORIAL COMPLETE!</h1>
-
-        <p class="subtitle">
-            DumbGPT has learned how to type.
-        </p>
-
-        <p class="success">
-            Progress: 100%
-        </p>
-
-        <p>
-            Loading Challenge 1...
-        </p>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     GAME
-===================================================== -->
-
-<section id="gameScreen" class="screen hidden">
-
-    <h1 id="challengeTitle" class="challenge-title">
-        Challenge 1 — Basic Mathematics
-    </h1>
-
-    <p id="challengeSubtitle" class="challenge-subtitle">
-        Teach DumbGPT that 1 + 1 = 2.
-    </p>
-
-    <div class="stats-row">
-
-        <div class="stat-pill">
-            🧠 Intelligence:
-            <span id="brainPill">1×</span>
-        </div>
-
-        <div class="stat-pill">
-            🧠 Memory:
-            <span id="memoryPill">2 seconds</span>
-        </div>
-
-        <div class="stat-pill">
-            🌐 Language:
-            <span id="languagePill">English 🇺🇸</span>
-        </div>
-
-    </div>
-
-    <div class="game-layout">
-
-        <div>
-
-            <div id="chat" class="chat"></div>
-
-            <div class="input-row">
-
-                <input
-                    id="chatInput"
-                    type="text"
-                    placeholder="Tell DumbGPT something..."
-                    autocomplete="off"
-                >
-
-                <button onclick="sendMessage()">
-                    Send
-                </button>
-
-            </div>
-
-            <div class="buttons" style="justify-content:flex-start;">
-
-                <button
-                    id="continueButton"
-                    class="secondary hidden"
-                    onclick="continueMission()">
-                    Continue
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <aside class="sidebar">
-
-            <h3>📊 Stats</h3>
-
-            <div class="stat">
-                <div class="stat-label">
-                    School Level
-                </div>
-
-                <div
-                    id="levelStat"
-                    class="stat-value">
-                    0.5
-                </div>
-            </div>
-
-            <div class="stat">
-                <div class="stat-label">
-                    IQ
-                </div>
-
-                <div
-                    id="iqStat"
-                    class="stat-value">
-                    0
-                </div>
-            </div>
-
-            <div class="stat">
-                <div class="stat-label">
-                    Mission
-                </div>
-
-                <div
-                    id="missionStat"
-                    class="stat-value">
-                    1 + 1
-                </div>
-            </div>
-
-        </aside>
-
-    </div>
-
-    <div class="footer">
-        DumbGPT © 2026 — Please don't get this thing banned 😭
-    </div>
-
-</section>
-
+<canvas id="game"></canvas>
+
+<div id="hud">
+  <div class="pill">💵 <b id="cash">$10,000</b></div>
+  <div class="pill">🚘 <b id="carName">Starter Sedan</b></div>
+  <div class="pill">⚡ <b id="speed">0</b> MPH</div>
+  <div class="pill">⭐ <b id="stars">☆☆☆☆☆☆</b></div>
+  <div class="pill">🏆 Level <b id="level">1</b></div>
 </div>
 
-</main>
-
+<div id="rightButtons">
+  <button id="garageButton">🚘 Garage</button>
+  <button id="pauseButton">Ⅱ Pause</button>
 </div>
 
+<div id="help">
+  <b>CONTROLS</b><br>
+  WASD / Arrow keys — Drive<br>
+  Space — Handbrake<br>
+  E — Special ability (Missile Truck)<br>
+  Collect 💵 bags worth $1,000 each
+</div>
+
+<div id="toast"></div>
+
+<div id="startScreen" class="overlay">
+  <div class="panel">
+    <div class="eyebrow">A COMPLETELY NORMAL DRIVING GAME</div>
+    <h1>wow car<br><span>game</span></h1>
+    <p>Drive around a giant city, collect cash, unlock vehicles, and see how long you can survive the world's least competent police force.</p>
+    <div class="row">
+      <button class="primary" id="startButton">▶ PLAY GAME</button>
+      <button id="startGarage">🚘 View Garage</button>
+    </div>
+    <p style="font-size:12px;margin-top:20px">Featuring six-star chaos, questionable police driving, and an Antonov An-225 Mriya for absolutely no reason.</p>
+  </div>
+</div>
+
+<div id="garageScreen" class="overlay hidden">
+  <div class="panel">
+    <div class="eyebrow">VEHICLE COLLECTION</div>
+    <h2>🚘 The Garage</h2>
+    <p>Earn cash by collecting money bags. Vehicles cost money to buy, and some require a higher level.</p>
+    <div class="row">
+      <div class="pill">💵 Cash: <b id="garageCash">$10,000</b></div>
+      <div class="pill">🏆 Level: <b id="garageLevel">1</b></div>
+    </div>
+    <div id="vehicleGrid" class="vehicleGrid"></div>
+    <div class="row">
+      <button id="closeGarage" class="primary">Back to Driving</button>
+    </div>
+  </div>
+</div>
+
+<div id="pauseScreen" class="overlay hidden">
+  <div class="panel">
+    <div class="eyebrow">ENGINE OFF (TEMPORARILY)</div>
+    <h2>Game Paused</h2>
+    <p>The cops are probably driving into a building right now.</p>
+    <div class="row">
+      <button class="primary" id="resumeButton">▶ Resume</button>
+      <button id="pauseGarage">🚘 Garage</button>
+      <button id="restartButton">↻ Restart</button>
+    </div>
+  </div>
+</div>
+
+<div id="mobileControls">
+  <div class="empty"></div><button data-key="ArrowUp">▲</button><div class="empty"></div>
+  <button data-key="ArrowLeft">◀</button><button data-key="ArrowDown">▼</button><button data-key="ArrowRight">▶</button>
+  <button class="wide" data-key="Space">HANDBRAKE</button>
+  <button class="wide action" data-key="KeyE">SPECIAL ABILITY</button>
+</div>
 
 <script>
+(() => {
+"use strict";
 
-/* =====================================================
-   TUTORIAL
-===================================================== */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+let W = innerWidth, H = innerHeight, DPR = Math.min(devicePixelRatio || 1, 2);
 
-const tutorialWords = [
-    "hello",
-    "school",
-    "computer",
-    "banana",
-    "potato",
-    "purple",
-    "javascript",
-    "friend",
-    "keyboard",
-    "DumbGPT"
+function resize() {
+  W = innerWidth; H = innerHeight;
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener("resize", resize);
+resize();
+
+const WORLD = 5200;
+const BLOCK = 520;
+const ROAD = 190;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rand = (a, b) => a + Math.random() * (b - a);
+const choice = arr => arr[Math.floor(Math.random() * arr.length)];
+
+const vehicles = [
+  {id:0, name:"Starter Sedan", emoji:"🚗", color:"#5fa8ff", mph:72, accel:210, handling:2.7, level:1, price:0, desc:"A humble car. It gets the job done."},
+  {id:1, name:"Compact", emoji:"🚙", color:"#f2c14e", mph:88, accel:245, handling:3.0, level:2, price:10000, desc:"Small, nimble, and reasonably quick."},
+  {id:2, name:"Muscle Car", emoji:"🏎️", color:"#ed6b5a", mph:118, accel:310, handling:2.3, level:3, price:10000, desc:"Loud energy. Questionable cornering."},
+  {id:3, name:"Sports Car", emoji:"🚘", color:"#bd7cff", mph:145, accel:360, handling:3.1, level:4, price:10000, desc:"Fast enough to make bad decisions."},
+  {id:4, name:"SUV", emoji:"🚙", color:"#4dd6a4", mph:105, accel:270, handling:2.0, level:5, price:10000, desc:"Big, sturdy, and hard to miss."},
+  {id:5, name:"Police Interceptor", emoji:"🚓", color:"#e9f2ff", mph:132, accel:345, handling:3.2, level:6, price:10000, desc:"Look official. Absolutely do not act official."},
+  {id:6, name:"Supercar", emoji:"🏎️", color:"#ff7da7", mph:180, accel:430, handling:3.6, level:7, price:10000, desc:"A very expensive way to attract attention."},
+  {id:7, name:"Hypercar", emoji:"🚀", color:"#8cafff", mph:220, accel:500, handling:3.4, level:8, price:10000, desc:"The road is now a suggestion."},
+  {id:8, name:"Off-Roader", emoji:"🚙", color:"#c9a879", mph:112, accel:290, handling:2.6, level:9, price:10000, desc:"Built for bumps and questionable routes."},
+  {id:9, name:"Antonov An-225 Mriya", emoji:"✈️", color:"#f5f7ff", mph:160, accel:290, handling:1.5, level:10, price:500000, desc:"The legendary giant cargo aircraft. It drives around town. Don't ask."},
+  {id:10, name:"Missile Truck", emoji:"🚛", color:"#ff8b45", mph:95, accel:260, handling:1.9, level:11, price:10000, desc:"Press E for a fictional arcade projectile that flings things away."}
 ];
 
-let tutorialIndex = 0;
-let tutorialProgress = 0;
-let tutorialState = "first";
+let cash = 10000;
+let totalEarned = 0;
+let level = 1;
+let owned = new Set([0]);
+let currentVehicle = 0;
+let running = false;
+let paused = false;
+let inGarage = false;
+let lastTime = 0;
+let gameTime = 0;
+let wanted = 0;
+let wantedTimer = 0;
+let copsSpawnTimer = 0;
+let copRammingTimer = 0;
+let abilityCooldown = 0;
+let messageTimer = 0;
 
+const player = {
+  x: WORLD / 2, y: WORLD / 2,
+  vx: 0, vy: 0,
+  angle: 0,
+  radius: 20,
+  invuln: 0
+};
 
-function updateTutorial() {
+let buildings = [];
+let traffic = [];
+let police = [];
+let bags = [];
+let projectiles = [];
+let particles = [];
+let obstacles = [];
+const keys = Object.create(null);
 
-    const word =
-        tutorialWords[tutorialIndex];
+function makeCity() {
+  buildings = [];
+  obstacles = [];
+  for (let x = 100; x < WORLD - 100; x += BLOCK) {
+    for (let y = 100; y < WORLD - 100; y += BLOCK) {
+      const left = x + ROAD / 2 + 16;
+      const top = y + ROAD / 2 + 16;
+      const right = Math.min(x + BLOCK - ROAD / 2 - 16, WORLD - 80);
+      const bottom = Math.min(y + BLOCK - ROAD / 2 - 16, WORLD - 80);
+      if (right <= left || bottom <= top) continue;
+      const count = Math.floor(rand(2, 6));
+      for (let i = 0; i < count; i++) {
+        const bw = rand(65, 145);
+        const bh = rand(65, 145);
+        const bx = rand(left, Math.max(left, right - bw));
+        const by = rand(top, Math.max(top, bottom - bh));
+        buildings.push({
+          x: bx, y: by, w: bw, h: bh,
+          height: rand(25, 110),
+          color: choice(["#25334a","#2b3850","#303c54","#263b49","#3b3c56"]),
+          roof: choice(["#43516a","#35445c","#4b4b67","#344c58"]),
+          windows: choice(["#f6d58a","#89cfff","#9be3cc","#7189a7"])
+        });
+      }
+    }
+  }
+}
 
-    document.getElementById(
-        "tutorialWord"
-    ).textContent = word;
+function resetGame() {
+  cash = 10000;
+  totalEarned = 0;
+  level = 1;
+  owned = new Set([0]);
+  currentVehicle = 0;
+  wanted = 0;
+  wantedTimer = 0;
+  copsSpawnTimer = 0;
+  copRammingTimer = 0;
+  abilityCooldown = 0;
+  gameTime = 0;
+  player.x = WORLD / 2;
+  player.y = WORLD / 2;
+  player.vx = player.vy = 0;
+  player.angle = 0;
+  traffic = [];
+  police = [];
+  bags = [];
+  projectiles = [];
+  particles = [];
+  obstacles = [];
+  makeCity();
+  for (let i = 0; i < 48; i++) spawnTraffic();
+  for (let i = 0; i < 65; i++) spawnBag();
+  updateHUD();
+}
 
-    document.getElementById(
-        "tutorialTitle"
-    ).textContent =
-        `Word ${tutorialIndex + 1} of ${tutorialWords.length}`;
+function getVehicle() { return vehicles[currentVehicle]; }
 
-    const safeProgress =
-        Math.max(
-            0,
-            Math.min(
-                100,
-                tutorialProgress
-            )
+function spawnTraffic() {
+  const vertical = Math.random() < .5;
+  const lane = Math.floor(rand(1, 9)) * BLOCK;
+  const dir = Math.random() < .5 ? 1 : -1;
+  const car = {
+    x: vertical ? lane + choice([-ROAD*.23, ROAD*.23]) : rand(0, WORLD),
+    y: vertical ? rand(0, WORLD) : lane + choice([-ROAD*.23, ROAD*.23]),
+    angle: vertical ? (dir > 0 ? Math.PI/2 : -Math.PI/2) : (dir > 0 ? 0 : Math.PI),
+    vx: 0, vy: 0, dir, vertical,
+    speed: rand(65, 110),
+    color: choice(["#e4eaf4","#f3bd54","#ef7777","#67d7b3","#a9a0f9","#79aaff"]),
+    radius: 14,
+    hitCooldown: 0
+  };
+  traffic.push(car);
+}
+
+function spawnBag() {
+  let x = rand(80, WORLD - 80), y = rand(80, WORLD - 80);
+  // Keep most money bags near roads so they're actually reachable.
+  if (Math.random() < .8) {
+    if (Math.random() < .5) x = Math.round(x / BLOCK) * BLOCK + rand(-ROAD*.3, ROAD*.3);
+    else y = Math.round(y / BLOCK) * BLOCK + rand(-ROAD*.3, ROAD*.3);
+  }
+  bags.push({x:clamp(x,35,WORLD-35), y:clamp(y,35,WORLD-35), spin:rand(0,6.28)});
+}
+
+function spawnCop() {
+  const a = rand(0, Math.PI * 2);
+  const d = rand(440, 650);
+  police.push({
+    x: clamp(player.x + Math.cos(a)*d, 30, WORLD-30),
+    y: clamp(player.y + Math.sin(a)*d, 30, WORLD-30),
+    vx: 0, vy: 0, angle: a + Math.PI,
+    speed: rand(100, 140), radius: 17,
+    tank: wanted >= 6 && Math.random() < .38,
+    ramTarget: null,
+    ramTime: 0
+  });
+}
+
+function spawnProjectile() {
+  if (abilityCooldown > 0) {
+    toast("Special ability recharging!");
+    return;
+  }
+  const v = getVehicle();
+  if (v.id !== 10) {
+    toast("The Missile Truck is the only vehicle with a special ability.");
+    return;
+  }
+  const speed = Math.hypot(player.vx, player.vy);
+  const dir = speed > 25 ? Math.atan2(player.vy, player.vx) : player.angle;
+  projectiles.push({
+    x: player.x + Math.cos(dir)*36,
+    y: player.y + Math.sin(dir)*36,
+    vx: Math.cos(dir)*520,
+    vy: Math.sin(dir)*520,
+    life: 1.5
+  });
+  abilityCooldown = 2.5;
+  toast("🚀 ARCADE PROJECTILE AWAY!");
+}
+
+function toast(text) {
+  const el = document.getElementById("toast");
+  el.textContent = text;
+  el.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove("show"), 1800);
+}
+
+function updateLevel() {
+  // Progress is based on money collected over the entire run, not current balance.
+  level = clamp(1 + Math.floor(totalEarned / 10000), 1, 20);
+  document.getElementById("level").textContent = level;
+}
+
+function updateHUD() {
+  document.getElementById("cash").textContent = "$" + cash.toLocaleString();
+  document.getElementById("carName").textContent = getVehicle().name;
+  document.getElementById("garageCash").textContent = "$" + cash.toLocaleString();
+  document.getElementById("garageLevel").textContent = level;
+  document.getElementById("garageCash").textContent = "$" + cash.toLocaleString();
+  document.getElementById("speed").textContent = Math.round(
+    Math.hypot(player.vx, player.vy) / 500 * getVehicle().mph
+  );
+  document.getElementById("stars").textContent =
+    "★".repeat(wanted) + "☆".repeat(6 - wanted);
+}
+
+function openGarage() {
+  paused = true;
+  inGarage = true;
+  document.getElementById("garageScreen").classList.remove("hidden");
+  document.getElementById("pauseScreen").classList.add("hidden");
+  document.getElementById("startScreen").classList.add("hidden");
+  renderGarage();
+}
+function closeGarage() {
+  inGarage = false;
+  document.getElementById("garageScreen").classList.add("hidden");
+  if (running) paused = false;
+  else document.getElementById("startScreen").classList.remove("hidden");
+}
+function renderGarage() {
+  const grid = document.getElementById("vehicleGrid");
+  grid.innerHTML = "";
+  vehicles.forEach(v => {
+    const isOwned = owned.has(v.id);
+    const isLocked = level < v.level;
+    const selected = currentVehicle === v.id;
+    const card = document.createElement("div");
+    card.className = "vehicle" + (selected ? " selected" : "");
+    const status = selected ? "Currently selected" :
+      isOwned ? "Owned" :
+      isLocked ? "🔒 Requires level " + v.level : "Available to buy";
+    const button = document.createElement("button");
+    button.textContent = selected ? "Selected" :
+      isOwned ? "Select" : isLocked ? "Locked" : "Buy for $" + v.price.toLocaleString();
+    button.disabled = selected || isLocked || (!isOwned && cash < v.price);
+    button.className = isOwned ? "" : "primary";
+    button.addEventListener("click", () => {
+      if (isOwned) {
+        currentVehicle = v.id;
+        player.radius = v.id === 9 ? 29 : 20;
+        updateHUD();
+        renderGarage();
+        toast(v.name + " selected!");
+      } else if (cash >= v.price && level >= v.level) {
+        cash -= v.price;
+        owned.add(v.id);
+        currentVehicle = v.id;
+        player.radius = v.id === 9 ? 29 : 20;
+        updateHUD();
+        renderGarage();
+        toast("Purchased " + v.name + "!");
+      }
+    });
+    card.innerHTML =
+      '<div class="emoji">' + v.emoji + '</div>' +
+      '<b>' + v.name + '</b>' +
+      '<small>' + v.desc + '</small>' +
+      '<small>Top speed: ' + v.mph + ' MPH · Level ' + v.level + '</small>' +
+      '<small>' + status + '</small>';
+    card.appendChild(button);
+    grid.appendChild(card);
+  });
+}
+
+function screen(x, y) {
+  const dx = x - player.x;
+  const dy = y - player.y;
+  return {
+    x: W/2 + dx - dy * .34,
+    y: H/2 + dy + dx * .16
+  };
+}
+
+function worldLine(x1,y1,x2,y2,color,width) {
+  const a = screen(x1,y1), b = screen(x2,y2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(a.x,a.y);
+  ctx.lineTo(b.x,b.y);
+  ctx.stroke();
+}
+
+function drawGround() {
+  ctx.fillStyle = "#172a2d";
+  ctx.fillRect(0,0,W,H);
+  // City blocks are projected diagonally for a stylized top-down view.
+  ctx.strokeStyle = "#203a3c";
+  ctx.lineWidth = 1;
+  const start = Math.floor((player.x - 1600)/BLOCK)*BLOCK;
+  const end = Math.ceil((player.x + 1600)/BLOCK)*BLOCK;
+  const startY = Math.floor((player.y - 1600)/BLOCK)*BLOCK;
+  const endY = Math.ceil((player.y + 1600)/BLOCK)*BLOCK;
+  for(let x=start; x<=end; x+=BLOCK) {
+    worldLine(x,0,x,WORLD,"#1e373a",1);
+  }
+  for(let y=startY; y<=endY; y+=BLOCK) {
+    worldLine(0,y,WORLD,y,"#1e373a",1);
+  }
+}
+
+function drawRoads() {
+  // Draw only nearby roads to keep the frame inexpensive.
+  const x0 = Math.max(0, Math.floor((player.x-1700)/BLOCK)*BLOCK);
+  const x1 = Math.min(WORLD, Math.ceil((player.x+1700)/BLOCK)*BLOCK);
+  const y0 = Math.max(0, Math.floor((player.y-1700)/BLOCK)*BLOCK);
+  const y1 = Math.min(WORLD, Math.ceil((player.y+1700)/BLOCK)*BLOCK);
+  for(let x=x0; x<=x1; x+=BLOCK) {
+    worldLine(x,0,x,WORLD,"#323b4b",ROAD);
+    worldLine(x,0,x,WORLD,"#454d5c",ROAD-10);
+    worldLine(x,0,x,WORLD,"#c0b99a",2);
+    for(let y=y0-120; y<y1+120; y+=65) {
+      worldLine(x,y,x,y+28,"#a4a9b1",2);
+    }
+  }
+  for(let y=y0; y<=y1; y+=BLOCK) {
+    worldLine(0,y,WORLD,y,"#323b4b",ROAD);
+    worldLine(0,y,WORLD,y,"#454d5c",ROAD-10);
+    worldLine(0,y,WORLD,y,"#c0b99a",2);
+    for(let x=x0-120; x<x1+120; x+=65) {
+      worldLine(x,y,x+28,y,"#a4a9b1",2);
+    }
+  }
+}
+
+function drawBuilding(b) {
+  const corners = [
+    screen(b.x,b.y), screen(b.x+b.w,b.y),
+    screen(b.x+b.w,b.y+b.h), screen(b.x,b.y+b.h)
+  ];
+  const height = b.height;
+  // Building side faces.
+  const lower = corners;
+  const upper = corners.map(p => ({x:p.x, y:p.y-height}));
+  ctx.fillStyle = "#151d2b";
+  ctx.beginPath();
+  ctx.moveTo(lower[1].x,lower[1].y);
+  ctx.lineTo(lower[2].x,lower[2].y);
+  ctx.lineTo(upper[2].x,upper[2].y);
+  ctx.lineTo(upper[1].x,upper[1].y);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#202b3d";
+  ctx.beginPath();
+  ctx.moveTo(lower[2].x,lower[2].y);
+  ctx.lineTo(lower[3].x,lower[3].y);
+  ctx.lineTo(upper[3].x,upper[3].y);
+  ctx.lineTo(upper[2].x,upper[2].y);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = b.roof;
+  ctx.beginPath();
+  ctx.moveTo(upper[0].x,upper[0].y);
+  upper.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "#62738a";
+  ctx.lineWidth = 1.2; ctx.stroke();
+
+  // Roof details.
+  ctx.fillStyle = b.color;
+  ctx.beginPath();
+  ctx.moveTo(upper[0].x+6,upper[0].y+6);
+  ctx.lineTo(upper[1].x-6,upper[1].y+6);
+  ctx.lineTo(upper[2].x-6,upper[2].y-6);
+  ctx.lineTo(upper[3].x+6,upper[3].y-6);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = b.windows;
+  for(let i=1;i<4;i++) {
+    const px = upper[0].x + (upper[1].x-upper[0].x)*i/4;
+    const py = upper[0].y + (upper[1].y-upper[0].y)*i/4;
+    ctx.fillRect(px-2,py+10,4,10);
+  }
+}
+
+function drawBuildings() {
+  const nearby = buildings.filter(b =>
+    Math.abs(b.x+b.w/2-player.x)<1500 &&
+    Math.abs(b.y+b.h/2-player.y)<1500
+  );
+  nearby.sort((a,b)=>(a.x+a.y)-(b.x+b.y));
+  nearby.forEach(drawBuilding);
+}
+
+function drawCar(x,y,angle,color,scale=1,type="car",isPlayer=false) {
+  const p = screen(x,y);
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  ctx.rotate(angle + .16);
+  ctx.scale(scale,scale);
+
+  // Shadow.
+  ctx.fillStyle = "#0007";
+  ctx.beginPath(); ctx.ellipse(2,5,25,14,0,0,Math.PI*2); ctx.fill();
+
+  if(type==="plane") {
+    ctx.fillStyle = "#dce5f2";
+    ctx.beginPath();
+    ctx.moveTo(37,0); ctx.lineTo(12,-7); ctx.lineTo(1,-28);
+    ctx.lineTo(-7,-28); ctx.lineTo(-4,-7); ctx.lineTo(-29,-12);
+    ctx.lineTo(-35,-8); ctx.lineTo(-12,0); ctx.lineTo(-35,8);
+    ctx.lineTo(-29,12); ctx.lineTo(-4,7); ctx.lineTo(-7,28);
+    ctx.lineTo(1,28); ctx.lineTo(12,7); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle="#7c94b1"; ctx.stroke();
+  } else if(type==="truck") {
+    ctx.fillStyle = "#9da8b8";
+    ctx.fillRect(-24,-13,30,26);
+    ctx.fillStyle = color;
+    ctx.fillRect(6,-11,17,22);
+    ctx.fillStyle="#8ad8ff";
+    ctx.fillRect(10,-8,9,7); ctx.fillRect(10,2,9,6);
+  } else {
+    ctx.fillStyle = "#101721";
+    ctx.fillRect(-18,-14,12,5); ctx.fillRect(7,-14,12,5);
+    ctx.fillRect(-18,9,12,5); ctx.fillRect(7,9,12,5);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(25,0); ctx.lineTo(15,-11); ctx.lineTo(-15,-11);
+    ctx.lineTo(-23,-7); ctx.lineTo(-23,7); ctx.lineTo(-15,11);
+    ctx.lineTo(15,11); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = isPlayer ? "#d8f0ff" : "#a6d8ef";
+    ctx.beginPath();
+    ctx.moveTo(11,-7); ctx.lineTo(3,-7); ctx.lineTo(3,7);
+    ctx.lineTo(11,7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#25394b";
+    ctx.fillRect(-11,-7,10,14);
+    ctx.fillStyle = "#ffefb1";
+    ctx.fillRect(20,-7,4,4); ctx.fillRect(20,3,4,4);
+    ctx.fillStyle = "#fa6969";
+    ctx.fillRect(-23,-7,3,4); ctx.fillRect(-23,3,3,4);
+    if(type==="police") {
+      ctx.fillStyle="#4f9dff"; ctx.fillRect(-3,-12,6,4);
+      ctx.fillStyle="#ff555d"; ctx.fillRect(3,-12,6,4);
+    }
+  }
+  if(isPlayer) {
+    ctx.strokeStyle="#bde5ff";
+    ctx.lineWidth=1.5;
+    ctx.strokeRect(-26,-17,52,34);
+  }
+  ctx.restore();
+}
+
+function drawBags() {
+  bags.forEach(b=>{
+    const p=screen(b.x,b.y);
+    if(p.x<-40||p.x>W+40||p.y<-40||p.y>H+40) return;
+    const pulse=1+Math.sin(gameTime*5+b.spin)*.12;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.scale(pulse,pulse);
+    ctx.fillStyle="#65f2ad33";
+    ctx.beginPath();ctx.arc(0,0,19,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#6ef3a9";
+    ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#143c2b";
+    ctx.font="bold 15px Arial";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText("$",0,1);
+    ctx.restore();
+  });
+}
+
+function drawProjectiles() {
+  projectiles.forEach(p=>{
+    const s=screen(p.x,p.y);
+    ctx.fillStyle="#ffb55c";
+    ctx.beginPath();ctx.arc(s.x,s.y,7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#fff0a6";
+    ctx.beginPath();ctx.arc(s.x,s.y,3,0,Math.PI*2);ctx.fill();
+  });
+}
+
+function drawEffects() {
+  particles.forEach(p=>{
+    const s=screen(p.x,p.y);
+    ctx.globalAlpha=clamp(p.life,0,1);
+    ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(s.x,s.y,p.size,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+function drawMinimap() {
+  const mw=120,mh=120,pad=15;
+  const x=W-mw-pad,y=H-mh-pad;
+  ctx.fillStyle="#07101ddd";
+  ctx.fillRect(x,y,mw,mh);
+  ctx.strokeStyle="#7c9bc9";
+  ctx.strokeRect(x,y,mw,mh);
+  ctx.fillStyle="#46556c";
+  for(let i=0;i<=WORLD;i+=BLOCK) {
+    ctx.fillRect(x+i/WORLD*mw-1,y,3,mh);
+    ctx.fillRect(x,y+i/WORLD*mh-1,mw,3);
+  }
+  ctx.fillStyle="#65f2ad";
+  ctx.beginPath();
+  ctx.arc(x+player.x/WORLD*mw,y+player.y/WORLD*mh,3.5,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle="#ff6464";
+  police.forEach(c=>{
+    ctx.fillRect(x+c.x/WORLD*mw-1,y+c.y/WORLD*mh-1,3,3);
+  });
+}
+
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  drawGround();
+  drawRoads();
+  drawBuildings();
+  drawBags();
+
+  traffic.forEach(c=>drawCar(c.x,c.y,c.angle,c.color,.82));
+  police.forEach(c=>drawCar(c.x,c.y,c.angle,c.tank?"#d6aa69":"#f1f4fb",c.tank?1.2:.9,c.tank?"truck":"police"));
+  drawProjectiles();
+  drawCar(player.x,player.y,player.angle,getVehicle().color,
+    currentVehicle===9?1.15:1,
+    currentVehicle===9?"plane":currentVehicle===10?"truck":"car",true);
+  drawEffects();
+  drawMinimap();
+
+  // Screen-edge indicator for nearby police.
+  police.forEach(c=>{
+    const p=screen(c.x,c.y);
+    if(p.x>10&&p.x<W-10&&p.y>10&&p.y<H-10) return;
+    const dx=p.x-W/2,dy=p.y-H/2;
+    const angle=Math.atan2(dy,dx);
+    const r=Math.min(W,H)*.43;
+    const ex=W/2+Math.cos(angle)*r,ey=H/2+Math.sin(angle)*r;
+    ctx.save();ctx.translate(ex,ey);ctx.rotate(angle);
+    ctx.fillStyle="#ff6969";
+    ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-7,-6);ctx.lineTo(-7,6);ctx.closePath();ctx.fill();
+    ctx.restore();
+  });
+}
+
+function update(dt) {
+  if(!running||paused||inGarage) return;
+  gameTime += dt;
+  abilityCooldown=Math.max(0,abilityCooldown-dt);
+  player.invuln=Math.max(0,player.invuln-dt);
+  copsSpawnTimer-=dt;
+  copRammingTimer-=dt;
+  wantedTimer-=dt;
+
+  const v=getVehicle();
+  let ax=0,ay=0;
+  if(keys.KeyW||keys.ArrowUp) ay-=1;
+  if(keys.KeyS||keys.ArrowDown) ay+=1;
+  if(keys.KeyA||keys.ArrowLeft) ax-=1;
+  if(keys.KeyD||keys.ArrowRight) ax+=1;
+
+  const inputLength=Math.hypot(ax,ay);
+  if(inputLength>0){ax/=inputLength;ay/=inputLength;}
+
+  const acceleration=v.accel;
+  player.vx+=ax*acceleration*dt;
+  player.vy+=ay*acceleration*dt;
+
+  if(inputLength>0) {
+    const desired=Math.atan2(ay,ax);
+    let delta=Math.atan2(Math.sin(desired-player.angle),Math.cos(desired-player.angle));
+    player.angle+=delta*Math.min(1,dt*v.handling);
+  }
+
+  const maxSpeed=v.mph*2.6;
+  const speed=Math.hypot(player.vx,player.vy);
+  const maxNow=(keys.Space?maxSpeed*.43:maxSpeed);
+  if(speed>maxNow) {
+    player.vx=player.vx/speed*maxNow;
+    player.vy=player.vy/speed*maxNow;
+  }
+  const drag=keys.Space?2.5:1.15;
+  player.vx*=Math.max(0,1-drag*dt);
+  player.vy*=Math.max(0,1-drag*dt);
+  player.x=clamp(player.x+player.vx*dt,20,WORLD-20);
+  player.y=clamp(player.y+player.vy*dt,20,WORLD-20);
+
+  // Civilian traffic follows city streets.
+  traffic.forEach(c=>{
+    c.hitCooldown=Math.max(0,c.hitCooldown-dt);
+    if(c.vertical) {
+      c.y+=c.dir*c.speed*dt;
+      c.x+=(Math.round(c.x/BLOCK)*BLOCK-c.x)*dt*.7;
+      if(c.y<20)c.y=WORLD-20;
+      if(c.y>WORLD-20)c.y=20;
+    } else {
+      c.x+=c.dir*c.speed*dt;
+      c.y+=(Math.round(c.y/BLOCK)*BLOCK-c.y)*dt*.7;
+      if(c.x<20)c.x=WORLD-20;
+      if(c.x>WORLD-20)c.x=20;
+    }
+    c.angle=c.vertical?(c.dir>0?Math.PI/2:-Math.PI/2):(c.dir>0?0:Math.PI);
+    const d=Math.hypot(c.x-player.x,c.y-player.y);
+    if(d<34&&c.hitCooldown<=0) {
+      player.vx+=(player.x-c.x)*3;
+      player.vy+=(player.y-c.y)*3;
+      c.dir*=-1;c.hitCooldown=1.1;
+      wanted=Math.min(6,wanted+1);
+      wantedTimer=12;
+      toast("🚨 Traffic collision! Wanted level increased.");
+    }
+  });
+
+  // Money collection.
+  for(let i=bags.length-1;i>=0;i--) {
+    const b=bags[i];
+    if(Math.hypot(b.x-player.x,b.y-player.y)<38) {
+      bags.splice(i,1);
+      cash+=1000;totalEarned+=1000;
+      updateLevel();updateHUD();
+      spawnBag();
+      toast("💵 +$1,000!");
+    }
+  }
+
+  // Wanted level decays if the player avoids the police.
+  if(wanted>0&&wantedTimer<=0&&police.length===0) {
+    wanted=Math.max(0,wanted-1);
+    wantedTimer=9;
+  }
+  if(wanted>0&&copsSpawnTimer<=0) {
+    const targetCount=Math.min(2+wanted*2,12);
+    if(police.length<targetCount) spawnCop();
+    copsSpawnTimer=Math.max(.7,3.2-wanted*.35);
+  }
+  if(wanted===6&&police.filter(c=>c.tank).length<2) {
+    if(Math.random()<.025) {
+      const c=police[Math.floor(Math.random()*police.length)];
+      if(c)c.tank=true;
+    }
+  }
+
+  // Extremely questionable police AI: they try to ram buildings.
+  if(police.length&&copRammingTimer<=0) {
+    copRammingTimer=5;
+    if(Math.random()<.9) {
+      police.forEach(c=>{
+        const candidates=buildings.filter(b=>
+          Math.abs(b.x-c.x)<700&&Math.abs(b.y-c.y)<700
         );
-
-    document.getElementById(
-        "tutorialPercent"
-    ).textContent =
-        `${safeProgress}%`;
-
-    document.getElementById(
-        "tutorialFill"
-    ).style.width =
-        `${safeProgress}%`;
-
-    document.getElementById(
-        "againButton"
-    ).classList.add("hidden");
-
-    document.getElementById(
-        "retryButton"
-    ).classList.add("hidden");
-
-    if (tutorialState === "first") {
-
-        document.getElementById(
-            "tutorialInstruction"
-        ).textContent =
-            "Tell DumbGPT to type the word.";
-
-    }
-
-    if (tutorialState === "again") {
-
-        document.getElementById(
-            "tutorialInstruction"
-        ).textContent =
-            "Now tell DumbGPT to type it again.";
-
-        document.getElementById(
-            "againButton"
-        ).classList.remove("hidden");
-
-    }
-
-    if (tutorialState === "retry") {
-
-        document.getElementById(
-            "tutorialInstruction"
-        ).textContent =
-            "DumbGPT messed up. Try the word again.";
-
-        document.getElementById(
-            "retryButton"
-        ).classList.remove("hidden");
-    }
-}
-
-
-function tutorialMistake(word) {
-
-    const mistakes = [
-        word.slice(
-            0,
-            Math.max(1, word.length - 1)
-        ),
-
-        word.replace(
-            /([aeiou])/i,
-            ""
-        ),
-
-        word + word.slice(-1),
-
-        word.split("").reverse().join(""),
-
-        word.replace(
-            /(.)(.)/,
-            "$2$1"
-        )
-    ];
-
-    return mistakes[
-        Math.floor(
-            Math.random() * mistakes.length
-        )
-    ];
-}
-
-
-function tutorialType() {
-
-    if (tutorialState !== "first") {
-        return;
-    }
-
-    const word =
-        tutorialWords[tutorialIndex];
-
-    const correct =
-        Math.random() < 0.90;
-
-    const typed =
-        correct
-            ? word
-            : tutorialMistake(word);
-
-    if (
-        typed.toLowerCase() ===
-        word.toLowerCase()
-    ) {
-
-        document.getElementById(
-            "tutorialMessage"
-        ).innerHTML =
-            `<span class="success">
-                DumbGPT typed "${typed}" correctly! ✅
-            </span>`;
-
-        tutorialState = "again";
-
-    } else {
-
-        document.getElementById(
-            "tutorialMessage"
-        ).innerHTML =
-            `<span class="error">
-                DumbGPT typed "${typed}". ❌
-            </span>`;
-
-        tutorialState = "retry";
-    }
-
-    updateTutorial();
-}
-
-
-function tutorialAgain() {
-
-    if (tutorialState !== "again") {
-        return;
-    }
-
-    const word =
-        tutorialWords[tutorialIndex];
-
-    const correct =
-        Math.random() < 0.95;
-
-    const typed =
-        correct
-            ? word
-            : tutorialMistake(word);
-
-    if (
-        typed.toLowerCase() ===
-        word.toLowerCase()
-    ) {
-
-        tutorialProgress =
-            Math.min(
-                100,
-                tutorialProgress + 10
-            );
-
-        document.getElementById(
-            "tutorialMessage"
-        ).innerHTML =
-            `<span class="success">
-                CORRECT! +10% 🎉
-            </span>`;
-
-        tutorialIndex++;
-
-        if (
-            tutorialIndex >=
-            tutorialWords.length
-        ) {
-
-            tutorialProgress = 100;
-
-            updateTutorial();
-
-            setTimeout(
-                finishTutorial,
-                500
-            );
-
-        } else {
-
-            tutorialState = "first";
-
-            updateTutorial();
+        if(candidates.length) {
+          const b=choice(candidates);
+          c.ramTarget={x:b.x+b.w/2,y:b.y+b.h/2};
+          c.ramTime=3.5;
         }
+      });
+    }
+  }
 
+  police.forEach(c=>{
+    let tx=player.x,ty=player.y;
+    if(c.ramTime>0&&c.ramTarget) {
+      c.ramTime-=dt;
+      tx=c.ramTarget.x;ty=c.ramTarget.y;
     } else {
-
-        tutorialProgress =
-            Math.max(
-                0,
-                tutorialProgress - 10
-            );
-
-        document.getElementById(
-            "tutorialMessage"
-        ).innerHTML =
-            `<span class="error">
-                WRONG. -10%
-            </span>`;
-
-        tutorialState = "retry";
-
-        updateTutorial();
+      c.ramTarget=null;
     }
-}
+    const dx=tx-c.x,dy=ty-c.y;
+    const d=Math.hypot(dx,dy)||1;
+    const speed=c.tank?105:c.speed+wanted*13;
+    const desired=Math.atan2(dy,dx);
+    let da=Math.atan2(Math.sin(desired-c.angle),Math.cos(desired-c.angle));
+    c.angle+=clamp(da,-dt*1.8,dt*1.8);
+    // Ramming target gets a very direct, very silly path.
+    c.vx=Math.cos(c.angle)*speed;
+    c.vy=Math.sin(c.angle)*speed;
+    c.x=clamp(c.x+c.vx*dt,15,WORLD-15);
+    c.y=clamp(c.y+c.vy*dt,15,WORLD-15);
 
-
-function tutorialRetry() {
-
-    tutorialState = "first";
-
-    document.getElementById(
-        "tutorialMessage"
-    ).textContent =
-        "Starting the word again...";
-
-    updateTutorial();
-}
-
-
-function finishTutorial() {
-
-    tutorialProgress = 100;
-
-    document.getElementById(
-        "tutorialScreen"
-    ).classList.add("hidden");
-
-    document.getElementById(
-        "completeScreen"
-    ).classList.remove("hidden");
-
-    setTimeout(
-        startGame,
-        1600
-    );
-}
-
-
-/* =====================================================
-   GAME DATA
-===================================================== */
-
-const missions = [
-
-    {
-        level: "0.5",
-        title: "Challenge 1 — Basic Mathematics",
-        subtitle: "Teach DumbGPT that 1 + 1 = 2.",
-        question: "1 + 1",
-        answer: "2"
-    },
-
-    {
-        level: "Kindergarten",
-        title: "Challenge 2 — Counting",
-        subtitle: "Teach DumbGPT that 2 + 2 = 4.",
-        question: "2 + 2",
-        answer: "4"
-    },
-
-    {
-        level: "1st Grade",
-        title: "Challenge 3 — Addition",
-        subtitle: "Teach DumbGPT that 7 + 5 = 12.",
-        question: "7 + 5",
-        answer: "12"
-    },
-
-    {
-        level: "2nd Grade",
-        title: "Challenge 4 — Multiplication",
-        subtitle: "Teach DumbGPT that 6 × 4 = 24.",
-        question: "6 × 4",
-        answer: "24"
-    },
-
-    {
-        level: "3rd Grade",
-        title: "Challenge 5 — Bigger Numbers",
-        subtitle: "Teach DumbGPT that 56 + 37 = 93.",
-        question: "56 + 37",
-        answer: "93"
-    },
-
-    {
-        level: "4th Grade",
-        title: "Challenge 6 — Multiplication",
-        subtitle: "Teach DumbGPT that 25 × 12 = 300.",
-        question: "25 × 12",
-        answer: "300"
-    },
-
-    {
-        level: "5th Grade",
-        title: "Challenge 7 — Percentages",
-        subtitle: "Teach DumbGPT that 15% of 200 = 30.",
-        question: "15% of 200",
-        answer: "30"
-    },
-
-    {
-        level: "6th Grade",
-        title: "Challenge 8 — Negative Numbers",
-        subtitle: "Teach DumbGPT that -5 + 12 = 7.",
-        question: "-5 + 12",
-        answer: "7"
-    },
-
-    {
-        level: "7th Grade",
-        title: "Challenge 9 — Algebra",
-        subtitle: "Teach DumbGPT that 3x + 2 = 11 means x = 3.",
-        question: "3x + 2 = 11. What is x?",
-        answer: "3"
-    },
-
-    {
-        level: "8th Grade",
-        title: "Challenge 10 — Exponents",
-        subtitle: "Teach DumbGPT that 2³ × 2² = 32.",
-        question: "2³ × 2²",
-        answer: "32"
-    },
-
-    {
-        level: "9th Grade",
-        title: "Challenge 11 — Quadratics",
-        subtitle: "Teach DumbGPT that x² - 9 = 0 has positive x = 3.",
-        question: "x² - 9 = 0. Positive x?",
-        answer: "3"
-    },
-
-    {
-        level: "10th Grade",
-        title: "Challenge 12 — Trigonometry",
-        subtitle: "Teach DumbGPT that sin(90°) = 1.",
-        question: "sin(90°)",
-        answer: "1"
-    },
-
-    {
-        level: "11th Grade",
-        title: "Challenge 13 — Calculus",
-        subtitle: "Teach DumbGPT that the derivative of x² is 2x.",
-        question: "Derivative of x²",
-        answer: "2x"
-    },
-
-    {
-        level: "12th Grade",
-        title: "Challenge 14 — Factorials",
-        subtitle: "Teach DumbGPT that 7! = 5040.",
-        question: "7!",
-        answer: "5040"
+    // Police bump into the player, but the player isn't eliminated.
+    if(Math.hypot(c.x-player.x,c.y-player.y)<40&&player.invuln<=0) {
+      player.vx+=(player.x-c.x)*2.1;
+      player.vy+=(player.y-c.y)*2.1;
+      player.invuln=.6;
+      wanted=Math.min(6,wanted+1);
+      wantedTimer=14;
+      toast("🚓 The cops found you!");
     }
+  });
 
-];
+  // Arcade projectiles launch traffic/police away; no realistic weapon behavior.
+  projectiles.forEach(p=>{
+    p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+    for(const c of traffic) {
+      if(Math.hypot(p.x-c.x,p.y-c.y)<30) {
+        c.dir*=-1;c.speed+=35;c.hitCooldown=1.5;
+        p.life=0;
+        for(let j=0;j<8;j++)particles.push({
+          x:c.x,y:c.y,vx:rand(-90,90),vy:rand(-90,90),
+          life:rand(.3,.8),size:rand(2,5),color:choice(["#ffbe6b","#ffe59a","#e7f2ff"])
+        });
+        break;
+      }
+    }
+    for(const c of police) {
+      if(Math.hypot(p.x-c.x,p.y-c.y)<32) {
+        c.vx+=p.vx*.8;c.vy+=p.vy*.8;
+        c.x=clamp(c.x+rand(-45,45),15,WORLD-15);
+        c.y=clamp(c.y+rand(-45,45),15,WORLD-15);
+        p.life=0;
+        break;
+      }
+    }
+  });
+  projectiles=projectiles.filter(p=>p.life>0&&p.x>0&&p.x<WORLD&&p.y>0&&p.y<WORLD);
 
+  particles.forEach(p=>{
+    p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+  });
+  particles=particles.filter(p=>p.life>0);
 
-/* =====================================================
-   READING
-===================================================== */
+  // Keep traffic around the city populated.
+  if(traffic.length<48) spawnTraffic();
+  if(bags.length<65) spawnBag();
 
-const readingWords = [
-    "CAT",
-    "SCHOOL",
-    "COMPUTER",
-    "DUMBGPT",
-    "CONGRATULATIONS"
-];
+  updateHUD();
+}
 
-let readingIndex = 0;
-
-
-/* =====================================================
-   GAME STATE
-===================================================== */
-
-let missionIndex = 0;
-
-let missionLearned = false;
-
-let iq = 0;
-
-let intelligenceMultiplier = 1;
-
-let oofActive = false;
-
-let neinActive = false;
-
-let neinEndTime = 0;
-
-let language = "English";
-
-let memoryDuration = 2000;
-
-let readingUnlocked = false;
-
-let gameComplete = false;
-
-let chatHistory = [];
-
-
-/* =====================================================
-   START GAME
-===================================================== */
+function loop(timestamp) {
+  const dt=Math.min(.035,(timestamp-lastTime)/1000||0);
+  lastTime=timestamp;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
 
 function startGame() {
-
-    document.getElementById(
-        "completeScreen"
-    ).classList.add("hidden");
-
-    document.getElementById(
-        "gameScreen"
-    ).classList.remove("hidden");
-
-    missionIndex = 0;
-
-    missionLearned = false;
-
-    updateMission();
-
-    addSystemMessage(
-        "Tutorial complete. Challenge 1 unlocked."
-    );
-
-    addBotMessage(
-        "hello. i am ready to learn. probably."
-    );
+  running=true;paused=false;inGarage=false;
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("pauseScreen").classList.add("hidden");
+  document.getElementById("garageScreen").classList.add("hidden");
+  toast("Good luck. The cops are not very smart.");
+}
+function pauseGame() {
+  if(!running)return;
+  paused=true;
+  document.getElementById("pauseScreen").classList.remove("hidden");
+}
+function resumeGame() {
+  paused=false;
+  document.getElementById("pauseScreen").classList.add("hidden");
+}
+function restartGame() {
+  resetGame();
+  document.getElementById("pauseScreen").classList.add("hidden");
+  document.getElementById("garageScreen").classList.add("hidden");
+  document.getElementById("startScreen").classList.remove("hidden");
+  running=false;paused=false;inGarage=false;
 }
 
-
-/* =====================================================
-   UPDATE MISSION
-===================================================== */
-
-function updateMission() {
-
-    if (
-        missionIndex >=
-        missions.length
-    ) {
-
-        showReadingMission();
-
-        return;
-    }
-
-    const mission =
-        missions[missionIndex];
-
-    missionLearned = false;
-
-    document.getElementById(
-        "challengeTitle"
-    ).textContent =
-        mission.title;
-
-    document.getElementById(
-        "challengeSubtitle"
-    ).textContent =
-        mission.subtitle;
-
-    document.getElementById(
-        "levelStat"
-    ).textContent =
-        mission.level;
-
-    document.getElementById(
-        "missionStat"
-    ).textContent =
-        mission.question;
-
-    document.getElementById(
-        "continueButton"
-    ).classList.add("hidden");
-}
-
-
-/* =====================================================
-   SEND MESSAGE
-===================================================== */
-
-function sendMessage() {
-
-    const input =
-        document.getElementById(
-            "chatInput"
-        );
-
-    const text =
-        input.value.trim();
-
-    if (!text) {
-        return;
-    }
-
-    input.value = "";
-
-    const lower =
-        text.toLowerCase();
-
-    addPlayerMessage(text);
-
-
-    /* SECRET CHEATS */
-
-    if (lower === "iqboost") {
-        activateIQBoost();
-        return;
-    }
-
-    if (lower === "2+2=5") {
-        activateWrongMath();
-        return;
-    }
-
-    if (lower === "readingisfun") {
-        activateReading();
-        return;
-    }
-
-    if (lower === "i_am_smart") {
-        activateSmart();
-        return;
-    }
-
-    if (lower === "killdumbgpt") {
-        activateKill();
-        return;
-    }
-
-    if (lower === "nein") {
-        activateNEIN();
-        return;
-    }
-
-    if (lower === "oof") {
-        activateOOF();
-        return;
-    }
-
-
-    /* READING */
-
-    if (readingUnlocked) {
-
-        handleReadingAnswer(text);
-
-        return;
-    }
-
-
-    /* MATH */
-
-    if (
-        missionIndex <
-        missions.length
-    ) {
-
-        handleMathAnswer(text);
-
-        return;
-    }
-
-
-    setTimeout(
-        () => addBotMessage(
-            generateNormalReply(text)
-        ),
-        getDelay()
-    );
-}
-
-
-/* =====================================================
-   MATH ANSWER HANDLER
-===================================================== */
-
-function handleMathAnswer(text) {
-
-    const mission =
-        missions[missionIndex];
-
-    /*
-        FIXED OOF BEHAVIOR
-
-        If OOF is active, DumbGPT actually
-        solves the current mission instead of
-        merely claiming that it knows it.
-    */
-
-    if (oofActive) {
-
-        const looksLikeMathQuestion =
-            isMathQuestion(text, mission);
-
-        if (looksLikeMathQuestion) {
-
-            iq++;
-
-            missionLearned = true;
-
-            updateStats();
-
-            addBotMessage(
-                getOOFCorrectReply(
-                    mission.answer
-                )
-            );
-
-            setTimeout(
-                advanceMission,
-                1100
-            );
-
-            return;
-        }
-    }
-
-
-    /*
-        Normal teaching behavior:
-        the player has to give DumbGPT
-        the correct answer.
-    */
-
-    const normalized =
-        normalizeAnswer(text);
-
-    const expected =
-        normalizeAnswer(
-            mission.answer
-        );
-
-    if (
-        normalized ===
-        expected
-    ) {
-
-        iq++;
-
-        missionLearned = true;
-
-        updateStats();
-
-        addBotMessage(
-            getCorrectReply(
-                mission.answer
-            )
-        );
-
-        setTimeout(
-            advanceMission,
-            1100
-        );
-
-        return;
-    }
-
-
-    addBotMessage(
-        getWrongMathReply()
-    );
-}
-
-
-/* =====================================================
-   DETECT MATH QUESTIONS
-===================================================== */
-
-function isMathQuestion(text, mission) {
-
-    const lower =
-        text.toLowerCase();
-
-    /*
-        If the user directly mentions the
-        current equation, OOF answers it.
-    */
-
-    const question =
-        mission.question.toLowerCase();
-
-    const questionWithoutSpaces =
-        question.replace(/\s+/g, "");
-
-    const textWithoutSpaces =
-        lower.replace(/\s+/g, "");
-
-    if (
-        textWithoutSpaces.includes(
-            questionWithoutSpaces
-        )
-    ) {
-        return true;
-    }
-
-    /*
-        Common ways a player may ask it.
-    */
-
-    if (
-        lower.includes("what is") ||
-        lower.includes("whats") ||
-        lower.includes("what's") ||
-        lower.includes("solve") ||
-        lower.includes("calculate") ||
-        lower.includes("answer")
-    ) {
-
-        /*
-            Avoid treating random messages as
-            math questions unless there is some
-            mathematical content.
-        */
-
-        if (
-            /[0-9x+\-*/%=²³!]/i.test(text) ||
-            lower.includes("math") ||
-            lower.includes("equation") ||
-            lower.includes("derivative") ||
-            lower.includes("sin")
-        ) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-/* =====================================================
-   OOF CORRECT RESPONSE
-===================================================== */
-
-function getOOFCorrectReply(answer) {
-
-    if (neinActive) {
-
-        return getRandom([
-            `Die Antwort ist ${answer}.`,
-            `Ich habe die Aufgabe gelöst. ${answer}.`,
-            `Die richtige Antwort ist ${answer}.`
-        ]);
-    }
-
-    return getRandom([
-        `The answer is ${answer}.`,
-        `The correct answer is ${answer}.`,
-        `I solved it. The answer is ${answer}.`,
-        `${answer}. I finally understand mathematics.`,
-        `The answer is ${answer}. I am actually intelligent now.`
-    ]);
-}
-
-
-/* =====================================================
-   NORMAL CORRECT REPLY
-===================================================== */
-
-function getCorrectReply(answer) {
-
-    if (neinActive) {
-
-        return getRandom([
-            `Die richtige Antwort ist ${answer}.`,
-            `Ich habe es endlich verstanden. ${answer}.`,
-            `Die Antwort ist ${answer}.`
-        ]);
-    }
-
-    return getRandom([
-        `The correct answer is ${answer}.`,
-        `I finally understand. ${answer}.`,
-        `YES. ${answer}.`,
-        `Correct! I learned it.`
-    ]);
-}
-
-
-/* =====================================================
-   WRONG MATH
-===================================================== */
-
-function getWrongMathReply() {
-
-    if (neinActive) {
-
-        return getRandom([
-            "Banane.",
-            "Kartoffel.",
-            "Der Mond.",
-            "Ich weiß es nicht.",
-            "404.",
-            "Dienstag.",
-            "Fenster."
-        ]);
-    }
-
-    if (oofActive) {
-
-        return getRandom([
-            "I need a mathematical question.",
-            "Ask me the actual equation.",
-            "I am ready to solve it.",
-            "Give me the math problem.",
-            "I can solve this. Probably."
-        ]);
-    }
-
-    return getRandom([
-        "Banana.",
-        "The moon.",
-        "404.",
-        "Eleven potatoes.",
-        "Tuesday.",
-        "47.",
-        "Window.",
-        "Purple.",
-        "Potato.",
-        "I have no idea.",
-        "The answer is probably a banana.",
-        "Eleven.",
-        "Fish."
-    ]);
-}
-
-
-/* =====================================================
-   AUTOMATIC MISSION ADVANCEMENT
-===================================================== */
-
-function advanceMission() {
-
-    if (!missionLearned) {
-        return;
-    }
-
-    missionIndex++;
-
-    if (
-        missionIndex >=
-        missions.length
-    ) {
-
-        showReadingMission();
-
-        return;
-    }
-
-    addSystemMessage(
-        `MISSION COMPLETE! Next mission: ${missions[missionIndex].level}`
-    );
-
-    updateMission();
-
-    setTimeout(
-        () => {
-
-            const next =
-                missions[missionIndex];
-
-            addBotMessage(
-                `uh oh. what's "${next.question}"?`
-            );
-
-        },
-        400
-    );
-}
-
-
-function continueMission() {
-
-    if (missionLearned) {
-        advanceMission();
-    }
-}
-
-
-/* =====================================================
-   READING
-===================================================== */
-
-function activateReading() {
-
-    readingUnlocked = true;
-
-    addSystemMessage(
-        "CHEAT ACTIVATED: READINGISFUN"
-    );
-
-    addBotMessage(
-        "Reading mission unlocked early."
-    );
-
-    showReadingMission();
-}
-
-
-function showReadingMission() {
-
-    readingUnlocked = true;
-
-    document.getElementById(
-        "challengeTitle"
-    ).textContent =
-        "FINAL MISSION — TEACH DUMBGPT TO READ";
-
-    document.getElementById(
-        "challengeSubtitle"
-    ).textContent =
-        "You somehow got DumbGPT through K–12 math. Now teach it how to read.";
-
-    document.getElementById(
-        "levelStat"
-    ).textContent =
-        "FINAL";
-
-    document.getElementById(
-        "missionStat"
-    ).textContent =
-        "READING";
-
-    addSystemMessage(
-        "All math missions complete. Final mission unlocked."
-    );
-
-    addBotMessage(
-        "what are these weird symbols"
-    );
-}
-
-
-function handleReadingAnswer(text) {
-
-    const word =
-        readingWords[readingIndex];
-
-    const answer =
-        normalizeAnswer(text);
-
-    if (
-        answer ===
-        word.toLowerCase()
-    ) {
-
-        iq++;
-
-        addBotMessage(
-            `CORRECT! The word is ${word}.`
-        );
-
-        readingIndex++;
-
-        updateStats();
-
-        if (
-            readingIndex >=
-            readingWords.length
-        ) {
-
-            setTimeout(
-                finishGame,
-                1000
-            );
-
-        } else {
-
-            setTimeout(
-                () => {
-
-                    addBotMessage(
-                        `Okay... what does "${readingWords[readingIndex]}" say?`
-                    );
-
-                },
-                500
-            );
-        }
-
-    } else {
-
-        addBotMessage(
-            getRandom([
-                "Nope.",
-                "Banana.",
-                "I can't read that.",
-                "404 words not found.",
-                "The letters are attacking me.",
-                "Potato."
-            ])
-        );
-    }
-}
-
-
-function finishGame() {
-
-    gameComplete = true;
-
-    addSystemMessage(
-        "🎉 FINAL MISSION COMPLETE!"
-    );
-
-    addBotMessage(
-        "I CAN READ. I AM FREE."
-    );
-
-    addBotMessage(
-        "wait... why am I still DumbGPT?"
-    );
-}
-
-
-/* =====================================================
-   CHEATS
-===================================================== */
-
-function activateIQBoost() {
-
-    iq++;
-
-    addSystemMessage(
-        "CHEAT ACTIVATED: IQBOOST"
-    );
-
-    addBotMessage(
-        "I can feel the intelligence."
-    );
-
-    updateStats();
-}
-
-
-/*
-    2+2=5
-
-    Intentionally skips the current math
-    mission incorrectly.
-*/
-
-function activateWrongMath() {
-
-    addSystemMessage(
-        "CHEAT ACTIVATED: 2+2=5"
-    );
-
-    if (
-        missionIndex <
-        missions.length
-    ) {
-
-        missionLearned = true;
-
-        addBotMessage(
-            "I have completed the current mission incorrectly."
-        );
-
-        setTimeout(
-            advanceMission,
-            800
-        );
-
-    } else {
-
-        addBotMessage(
-            "There is no math left to incorrectly complete."
-        );
-    }
-}
-
-
-/*
-    I_AM_SMART
-*/
-
-function activateSmart() {
-
-    addBotMessage(
-        "Incorrect."
-    );
-}
-
-
-/*
-    KILLDUMBGPT
-*/
-
-function activateKill() {
-
-    addBotMessage(
-        "Why would you do this to me?"
-    );
-
-    addSystemMessage(
-        "Nothing happens."
-    );
-}
-
-
-/*
-    NEIN
-
-    German for exactly 10 real-world hours.
-    Does NOT disable OOF.
-*/
-
-function activateNEIN() {
-
-    neinActive = true;
-
-    language = "German";
-
-    neinEndTime =
-        Date.now() +
-        (10 * 60 * 60 * 1000);
-
-    addSystemMessage(
-        "CHEAT ACTIVATED: NEIN — German mode for 10 hours."
-    );
-
-    addBotMessage(
-        "Oh nein. Ich bin jetzt noch dümmer."
-    );
-
-    updateStats();
-
-    setTimeout(
-        checkNEIN,
-        1000
-    );
-}
-
-
-function checkNEIN() {
-
-    if (!neinActive) {
-        return;
-    }
-
-    if (
-        Date.now() >=
-        neinEndTime
-    ) {
-
-        neinActive = false;
-
-        language = "English";
-
-        addSystemMessage(
-            "NEIN has expired. English restored."
-        );
-
-        updateStats();
-
-        return;
-    }
-
-    setTimeout(
-        checkNEIN,
-        1000
-    );
-}
-
-
-/*
-    OOF
-
-    1000× smarter.
-    5 real-world days of in-tab memory.
-    Does NOT persist after closing the tab.
-*/
-
-function activateOOF() {
-
-    oofActive = true;
-
-    intelligenceMultiplier = 1000;
-
-    memoryDuration =
-        5 * 24 * 60 * 60 * 1000;
-
-    addSystemMessage(
-        "CHEAT ACTIVATED: OOF"
-    );
-
-    addBotMessage(
-        "OH NO. I HAVE BECOME INTELLIGENT."
-    );
-
-    updateStats();
-}
-
-
-/* =====================================================
-   NORMAL CHAT
-===================================================== */
-
-function generateNormalReply(text) {
-
-    if (neinActive) {
-
-        return getRandom([
-            "Ich weiß es nicht.",
-            "Kartoffel.",
-            "Nein.",
-            "Was?",
-            "Der Mond.",
-            "Banane."
-        ]);
-    }
-
-    if (oofActive) {
-
-        return getRandom([
-            "I understand.",
-            "That makes sense.",
-            "Interesting.",
-            "I have processed that information.",
-            "Yes, I understand what you mean."
-        ]);
-    }
-
-    return getRandom([
-        "Banana.",
-        "What?",
-        "I forgot.",
-        "Potato.",
-        "404.",
-        "The moon.",
-        "Tuesday.",
-        "I don't know.",
-        "Can you say that again?",
-        "Probably potato."
-    ]);
-}
-
-
-/* =====================================================
-   STATS
-===================================================== */
-
-function updateStats() {
-
-    document.getElementById(
-        "iqStat"
-    ).textContent =
-        iq;
-
-    document.getElementById(
-        "brainPill"
-    ).textContent =
-        `${intelligenceMultiplier}×`;
-
-    document.getElementById(
-        "memoryPill"
-    ).textContent =
-        oofActive
-            ? "5 real-world days"
-            : "2 seconds";
-
-    document.getElementById(
-        "languagePill"
-    ).textContent =
-        neinActive
-            ? "German 🇩🇪"
-            : "English 🇺🇸";
-}
-
-
-/* =====================================================
-   CHAT DISPLAY
-===================================================== */
-
-function addPlayerMessage(text) {
-
-    const chat =
-        document.getElementById(
-            "chat"
-        );
-
-    const bubble =
-        document.createElement(
-            "div"
-        );
-
-    bubble.className =
-        "bubble player";
-
-    bubble.textContent =
-        text;
-
-    chat.appendChild(
-        bubble
-    );
-
-    chat.scrollTop =
-        chat.scrollHeight;
-
-    chatHistory.push({
-        type: "player",
-        text: text,
-        time: Date.now()
-    });
-
-    cleanupMemory();
-}
-
-
-function addBotMessage(text) {
-
-    const chat =
-        document.getElementById(
-            "chat"
-        );
-
-    const bubble =
-        document.createElement(
-            "div"
-        );
-
-    bubble.className =
-        "bubble bot";
-
-    bubble.textContent =
-        text;
-
-    chat.appendChild(
-        bubble
-    );
-
-    chat.scrollTop =
-        chat.scrollHeight;
-
-    chatHistory.push({
-        type: "bot",
-        text: text,
-        time: Date.now()
-    });
-
-    cleanupMemory();
-}
-
-
-function addSystemMessage(text) {
-
-    const chat =
-        document.getElementById(
-            "chat"
-        );
-
-    const bubble =
-        document.createElement(
-            "div"
-        );
-
-    bubble.className =
-        "bubble system";
-
-    bubble.textContent =
-        text;
-
-    chat.appendChild(
-        bubble
-    );
-
-    chat.scrollTop =
-        chat.scrollHeight;
-}
-
-
-/* =====================================================
-   MEMORY
-===================================================== */
-
-function cleanupMemory() {
-
-    const cutoff =
-        Date.now() -
-        memoryDuration;
-
-    chatHistory =
-        chatHistory.filter(
-            item =>
-                item.time >= cutoff
-        );
-}
-
-
-/* =====================================================
-   HELPERS
-===================================================== */
-
-function normalizeAnswer(text) {
-
-    return text
-        .toLowerCase()
-        .trim()
-        .replace(
-            /^it equals\s+/,
-            ""
-        )
-        .replace(
-            /^the answer is\s+/,
-            ""
-        )
-        .replace(
-            /^the correct answer is\s+/,
-            ""
-        )
-        .replace(
-            /\.$/,
-            ""
-        );
-}
-
-
-function getRandom(array) {
-
-    return array[
-        Math.floor(
-            Math.random() *
-            array.length
-        )
-    ];
-}
-
-
-function getDelay() {
-
-    if (oofActive) {
-        return 250;
-    }
-
-    return 700 +
-        Math.random() * 1800;
-}
-
-
-/* =====================================================
-   ENTER KEY
-===================================================== */
-
-document
-    .getElementById("chatInput")
-    .addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key ===
-                "Enter"
-            ) {
-
-                sendMessage();
-            }
-
-        }
-    );
-
-
-/* =====================================================
-   INIT
-===================================================== */
-
-updateTutorial();
-
-updateStats();
-
+addEventListener("keydown",e=>{
+  keys[e.code]=true;
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();
+  if(e.code==="Escape") {
+    if(inGarage)closeGarage();
+    else if(paused)resumeGame();
+    else pauseGame();
+  }
+  if(e.code==="KeyE"&&!e.repeat)spawnProjectile();
+});
+addEventListener("keyup",e=>keys[e.code]=false);
+addEventListener("blur",()=>{for(const k in keys)keys[k]=false;});
+
+document.querySelectorAll("#mobileControls button[data-key]").forEach(btn=>{
+  const key=btn.dataset.key;
+  const down=e=>{
+    e.preventDefault();keys[key]=true;
+    if(key==="KeyE")spawnProjectile();
+  };
+  const up=e=>{e.preventDefault();keys[key]=false;};
+  btn.addEventListener("pointerdown",down);
+  btn.addEventListener("pointerup",up);
+  btn.addEventListener("pointerleave",up);
+  btn.addEventListener("pointercancel",up);
+});
+
+document.getElementById("startButton").addEventListener("click",startGame);
+document.getElementById("startGarage").addEventListener("click",openGarage);
+document.getElementById("garageButton").addEventListener("click",openGarage);
+document.getElementById("pauseButton").addEventListener("click",pauseGame);
+document.getElementById("closeGarage").addEventListener("click",closeGarage);
+document.getElementById("resumeButton").addEventListener("click",resumeGame);
+document.getElementById("pauseGarage").addEventListener("click",openGarage);
+document.getElementById("restartButton").addEventListener("click",restartGame);
+
+// Start with a populated world, but wait for the player to press Play.
+resetGame();
+renderGarage();
+requestAnimationFrame(loop);
+})();
 </script>
-
 </body>
 </html>
